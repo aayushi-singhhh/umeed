@@ -2,7 +2,11 @@ import React, { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { Eye, EyeOff, LogIn, UserPlus } from 'lucide-react';
 
-const Login = ({ onToggleMode }) => {
+interface LoginProps {
+  onToggleMode: () => void;
+}
+
+const Login: React.FC<LoginProps> = ({ onToggleMode }) => {
   const { login } = useAuth();
   const [formData, setFormData] = useState({
     email: '',
@@ -12,7 +16,7 @@ const Login = ({ onToggleMode }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  const handleChange = (e) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({
       ...formData,
       [e.target.name]: e.target.value
@@ -21,15 +25,15 @@ const Login = ({ onToggleMode }) => {
     if (error) setError('');
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError('');
 
     try {
-      await login(formData);
+      await login(formData.email, formData.password);
       // Navigation will be handled by the auth context
-    } catch (error) {
+    } catch (error: any) {
       setError(error.response?.data?.message || 'Login failed. Please try again.');
     } finally {
       setLoading(false);

@@ -174,7 +174,7 @@ export const CommunityHub: React.FC = () => {
             </div>
             
             <div className="space-y-6">
-              {recentPosts.map((post) => (
+              {recentPosts.map((post: any) => (
                 <div key={post.id} className="border-b border-gray-200 pb-6 last:border-b-0 last:pb-0">
                   <div className="flex justify-between items-start mb-3">
                     <div>
@@ -187,6 +187,7 @@ export const CommunityHub: React.FC = () => {
                   
                   <div className="flex items-center space-x-6">
                     <button 
+                      onClick={() => handleLikePost(post.id)}
                       className={`flex items-center space-x-1 text-sm ${
                         post.hasLiked ? 'text-red-500' : 'text-gray-500 hover:text-red-500'
                       }`}
