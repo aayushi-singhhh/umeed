@@ -1,4 +1,6 @@
 import { useState } from 'react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { Header } from './components/Header';
 import { OnboardingChatbot } from './components/OnboardingChatbot';
 import { ParentDashboard } from './components/ParentDashboard';
@@ -6,15 +8,17 @@ import { TeacherDashboard } from './components/TeacherDashboard';
 import { ChildDashboard } from './components/ChildDashboard';
 import { TherapistDashboard } from './components/TherapistDashboard';
 import { CommunityHub } from './components/CommunityHub';
-import { Home, Users, MessageCircle, Calendar, Settings, HelpCircle } from 'lucide-react';
-import { demoUsers } from './data/demoData';
+import AuthPage from './components/AuthPage';
+import ProtectedRoute from './components/ProtectedRoute';
+import { Home, Users, MessageCircle, Calendar, Settings, HelpCircle, LogOut } from 'lucide-react';
 
-function App() {
-  const [currentUserId, setCurrentUserId] = useState('parent1');
+// Create a client
+const queryClient = new QueryClient();
+
+const MainApp = () => {
+  const { isAuthenticated, user, loading, logout } = useAuth();
   const [currentView, setCurrentView] = useState('dashboard');
   const [showOnboarding, setShowOnboarding] = useState(false);
-
-  const currentUser = demoUsers.find(user => user.id === currentUserId) || demoUsers[0];
 
   const navigationItems = [
     { id: 'dashboard', label: 'Dashboard', icon: Home },
@@ -25,13 +29,29 @@ function App() {
     { id: 'help', label: 'Help', icon: HelpCircle }
   ];
 
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-purple-50">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-500 mx-auto mb-4"></div>
+          <h2 className="text-xl font-semibold text-gray-700">Loading Umeed...</h2>
+          <p className="text-gray-500 mt-2">Setting up your learning environment</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return <AuthPage />;
+  }
+
   const renderCurrentView = () => {
     if (showOnboarding) {
       return (
         <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 flex items-center justify-center p-4">
           <div className="w-full max-w-4xl">
             <div className="text-center mb-8">
-              <h1 className="text-4xl font-bold text-gray-900 mb-4">Welcome to BridgeConnect</h1>
+              <h1 className="text-4xl font-bold text-gray-900 mb-4">Welcome to Umeed</h1>
               <p className="text-xl text-gray-600">Let's create a personalized learning plan for your child</p>
             </div>
             <OnboardingChatbot />
@@ -53,7 +73,7 @@ function App() {
         return <CommunityHub />;
       case 'dashboard':
       default:
-        switch (currentUser.role) {
+        switch (user?.role) {
           case 'parent':
             return <ParentDashboard />;
           case 'teacher':
@@ -75,9 +95,8 @@ function App() {
   return (
     <div className="min-h-screen bg-gray-50">
       <Header 
-        currentUser={currentUser} 
-        onUserChange={setCurrentUserId} 
-        allUsers={demoUsers}
+        currentUser={user} 
+        onLogout={logout}
       />
       
       <div className="flex">
@@ -103,22 +122,42 @@ function App() {
               })}
             </div>
 
-            <div className="mt-8 pt-8 border-t border-gray-200">
+            <div className="mt-8 pt-8 border-t border-gray-200 space-y-2">
               <button
                 onClick={() => setShowOnboarding(true)}
                 className="w-full flex items-center justify-center space-x-2 px-4 py-2 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-lg hover:from-blue-600 hover:to-purple-700 transition-all duration-200"
               >
                 <span className="text-sm font-medium">Try AI Setup Demo</span>
               </button>
+              
+              <button
+                onClick={logout}
+                className="w-full flex items-center justify-center space-x-2 px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-all duration-200"
+              >
+                <LogOut className="h-4 w-4" />
+                <span className="text-sm font-medium">Logout</span>
+              </button>
             </div>
           </div>
         </nav>
 
         <main className="flex-1">
-          {renderCurrentView()}
+          <ProtectedRoute>
+            {renderCurrentView()}
+          </ProtectedRoute>
         </main>
       </div>
     </div>
+  );
+};
+
+function App() {
+  return (
+    <QueryClientProvider client={queryClient}>
+      <AuthProvider>
+        <MainApp />
+      </AuthProvider>
+    </QueryClientProvider>
   );
 }
 
