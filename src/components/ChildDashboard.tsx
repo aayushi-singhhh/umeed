@@ -3,6 +3,7 @@ import { Star, Trophy, Gift, Play, Book, Heart, Sparkles, Volume2, Pause, Rotate
 import { GameSelector } from './games/GameSelector';
 import { GameProgress } from './GameProgress';
 import { AILearningCoach } from './AILearningCoach';
+import { demoChildren, demoLearningMetrics, demoGameProgress } from '../data/demoData';
 
 export const ChildDashboard: React.FC = () => {
   const [selectedActivity, setSelectedActivity] = useState<string | null>(null);
@@ -12,7 +13,12 @@ export const ChildDashboard: React.FC = () => {
   const [showCelebration, setShowCelebration] = useState(false);
   const [showGames, setShowGames] = useState(false);
   const [showAICoach, setShowAICoach] = useState(false);
-  const [score, setScore] = useState(142);
+
+  // Get demo data for Alex (child1)
+  const childData = demoChildren.find(child => child.id === 'child1') || demoChildren[0];
+  const childMetrics = demoLearningMetrics.find(metric => metric.childId === 'child1');
+  const [score, setScore] = useState(childMetrics?.gameScores.reading || 142);
+
   const [dailyMissions, setDailyMissions] = useState([
     { id: 1, title: 'Safari Word Adventure', type: 'reading', completed: false, difficulty: 'easy', points: 15 },
     { id: 2, title: 'Pizza Fraction Fun', type: 'math', completed: true, difficulty: 'medium', points: 20 },
@@ -540,15 +546,8 @@ export const ChildDashboard: React.FC = () => {
             
             <div className="mt-8 pt-8 border-t border-gray-200">
               <button
-                onClick={() => setShowOnboarding(true)}
-                className="w-full flex items-center justify-center space-x-2 px-4 py-2 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-lg hover:from-blue-600 hover:to-purple-700 transition-all duration-200"
-              >
-                <span className="text-sm font-medium">Try AI Setup Demo</span>
-              </button>
-              
-              <button
                 onClick={() => setShowAICoach(true)}
-                className="w-full flex items-center justify-center space-x-2 px-4 py-2 mt-2 bg-gradient-to-r from-purple-500 to-pink-600 text-white rounded-lg hover:from-purple-600 hover:to-pink-700 transition-all duration-200"
+                className="w-full flex items-center justify-center space-x-2 px-4 py-2 bg-gradient-to-r from-purple-500 to-pink-600 text-white rounded-lg hover:from-purple-600 hover:to-pink-700 transition-all duration-200"
               >
                 <span className="text-sm font-medium">My Learning Story! 📖</span>
               </button>

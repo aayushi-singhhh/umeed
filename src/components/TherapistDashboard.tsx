@@ -1,49 +1,119 @@
-import React from 'react';
-import { Calendar, FileText, TrendingUp, Users, Clock, MessageCircle, Target, CheckSquare } from 'lucide-react';
+import React, { useState } from 'react';
+import { Calendar, FileText, TrendingUp, Users, Clock, Target, CheckSquare } from 'lucide-react';
+import { AILearningCoach } from './AILearningCoach';
+import { demoChildren, demoMessages, demoAIInsights } from '../data/demoData';
 
 export const TherapistDashboard: React.FC = () => {
-  const upcomingAppointments = [
-    { name: 'Alex M.', time: '2:00 PM', type: 'Speech Therapy', status: 'confirmed', progress: 'good' },
-    { name: 'Emma S.', time: '3:30 PM', type: 'Reading Support', status: 'confirmed', progress: 'needs-attention' },
-    { name: 'Jake R.', time: '4:00 PM', type: 'Social Skills', status: 'pending', progress: 'excellent' },
-    { name: 'Maya P.', time: '4:30 PM', type: 'Assessment', status: 'new', progress: 'baseline' }
-  ];
+  const [showAICoach, setShowAICoach] = useState(false);
 
-  const progressReports = [
-    { student: 'Alex M.', goal: 'Articulation /r/ sounds', current: 75, target: 85, sessions: 8 },
-    { student: 'Emma S.', goal: 'Reading fluency', current: 68, target: 80, sessions: 12 },
-    { student: 'Jake R.', goal: 'Turn-taking in conversation', current: 82, target: 90, sessions: 6 }
-  ];
+  // Get therapist's clients (Dr. Thompson - therapist1)
+  const therapistClients = demoChildren.filter(child => child.therapistId === 'therapist1');
+  const therapistMessages = demoMessages.filter(msg => msg.recipientId === 'therapist1' || msg.senderId === 'therapist1');
+  const therapistInsights = demoAIInsights.filter(insight => 
+    therapistClients.some(client => client.id === insight.childId)
+  );
 
-  const homeExercises = [
-    { student: 'Alex M.', exercise: 'Mirror practice /r/ sounds', completed: '4/5 days', parent: 'Sarah M.' },
-    { student: 'Emma S.', exercise: 'Daily 15-min reading', completed: '6/7 days', parent: 'Tom S.' },
-    { student: 'Jake R.', exercise: 'Social story practice', completed: '3/3 days', parent: 'Lisa R.' }
-  ];
+  const upcomingAppointments = therapistClients.map((client, index) => ({
+    name: client.name,
+    time: ['2:00 PM', '3:30 PM', '4:00 PM'][index] || '2:00 PM',
+    type: client.learningDifferences.includes('ADHD') ? 'Focus Training' :
+          client.learningDifferences.includes('Dyslexia') ? 'Reading Support' :
+          client.learningDifferences.includes('Autism') ? 'Social Skills' : 'General Therapy',
+    status: 'confirmed',
+    progress: ['good', 'excellent', 'needs-attention'][index % 3]
+  }));
 
-  const aiInsights = [
-    {
-      student: 'Alex M.',
-      insight: 'Shows improved confidence when using visual cues. Recommend increasing visual supports.',
-      type: 'recommendation'
+  const progressReports = therapistClients.map(client => ({
+    student: client.name,
+    goal: client.learningDifferences.includes('ADHD') ? 'Attention & Focus' :
+          client.learningDifferences.includes('Dyslexia') ? 'Reading fluency' :
+          'Social interaction skills',
+    current: Math.floor(Math.random() * 30) + 60,
+    target: 85,
+    sessions: Math.floor(Math.random() * 10) + 5
+  }));
+
+  // Sample learning data for AI Coach (therapist perspective)
+  const learningData = {
+    child: {
+      name: therapistClients[0]?.name || 'Alex',
+      age: therapistClients[0]?.age || 8,
+      learningDifferences: therapistClients[0]?.learningDifferences || ['ADHD', 'Dyslexia'],
+      interests: therapistClients[0]?.interests || ['dinosaurs', 'space', 'building blocks']
     },
-    {
-      student: 'Emma S.',
-      insight: 'Reading speed decreased last week. May need to check if new medication is affecting focus.',
-      type: 'alert'
+    dailyMetrics: {
+      tasksCompleted: 7,
+      totalTasks: 10,
+      focusTime: 23,
+      mood: 'happy',
+      gameScores: {
+        reading: 78,
+        math: 65,
+        focus: 88,
+        social: 71
+      },
+      streakDays: 5,
+      badgesEarned: ['Reading Wizard', 'Focus Champion']
     },
-    {
-      student: 'Jake R.',
-      insight: 'Excellent peer interaction progress. Ready for group therapy integration.',
-      type: 'milestone'
+    weeklyProgress: {
+      readingFluency: { current: 75, change: 8 },
+      taskIndependence: { current: 82, change: 5 },
+      socialInteraction: { current: 68, change: 12 },
+      emotionalRegulation: { current: 71, change: 15 }
+    },
+    patterns: {
+      bestLearningTime: 'morning',
+      frustrationTriggers: ['complex instructions', 'evening tasks'],
+      engagementBoosts: ['visual cues', 'movement breaks', 'positive reinforcement'],
+      taskAvoidance: ['writing tasks after 4 PM', 'multi-step instructions']
     }
-  ];
+  };
+
+  const homeExercises = therapistClients.map(client => ({
+    student: client.name,
+    exercise: client.learningDifferences.includes('ADHD') ? 'Focus breathing exercises' :
+              client.learningDifferences.includes('Dyslexia') ? 'Daily 15-min reading' :
+              'Social story practice',
+    completed: `${Math.floor(Math.random() * 7) + 1}/7 days`,
+    parent: demoMessages.find(msg => msg.senderId.includes('parent'))?.senderName || 'Parent'
+  }));
+
+  const aiInsights = therapistInsights.map(insight => ({
+    student: therapistClients.find(c => c.id === insight.childId)?.name || 'Student',
+    insight: insight.description,
+    type: insight.type
+  }));
+
+  if (showAICoach) {
+    return (
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="mb-6">
+          <button
+            onClick={() => setShowAICoach(false)}
+            className="text-blue-600 hover:text-blue-800 mb-4"
+          >
+            ← Back to Therapist Dashboard
+          </button>
+        </div>
+        <AILearningCoach learningData={learningData} userRole="therapist" />
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <div className="mb-8">
-        <h2 className="text-3xl font-bold text-gray-900">Welcome, Dr. Williams!</h2>
-        <p className="text-gray-600 mt-2">Your therapy session overview for today</p>
+      <div className="mb-8 flex items-center justify-between">
+        <div>
+          <h2 className="text-3xl font-bold text-gray-900">Welcome, Dr. Thompson! 👨‍⚕️</h2>
+          <p className="text-gray-600 mt-2">Your therapy session overview for today</p>
+        </div>
+        <button
+          onClick={() => setShowAICoach(true)}
+          className="px-4 py-2 bg-purple-500 text-white rounded-lg font-medium hover:bg-purple-600 transition-colors flex items-center space-x-2"
+        >
+          <span>🧠</span>
+          <span>AI Coach</span>
+        </button>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">

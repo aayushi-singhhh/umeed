@@ -1,9 +1,17 @@
 import React, { useState } from 'react';
 import { Users, BookOpen, MessageSquare, Lightbulb, AlertCircle, CheckCircle } from 'lucide-react';
 import { AILearningCoach } from './AILearningCoach';
+import { demoChildren, demoMessages, demoAIInsights } from '../data/demoData';
 
 export const TeacherDashboard: React.FC = () => {
   const [showAIInsights, setShowAIInsights] = useState(false);
+
+  // Get teacher's students (Ms. Rodriguez - teacher1)
+  const teacherStudents = demoChildren.filter(child => child.teacherId === 'teacher1');
+  const teacherMessages = demoMessages.filter(msg => msg.recipientId === 'teacher1' || msg.senderId === 'teacher1');
+  const teacherInsights = demoAIInsights.filter(insight => 
+    teacherStudents.some(student => student.id === insight.childId)
+  );
 
   // Sample learning data for AI Coach (teacher perspective)
   const learningData = {
@@ -41,73 +49,48 @@ export const TeacherDashboard: React.FC = () => {
     }
   };
 
-  const students = [
-    { 
-      name: 'Alex M.', 
-      condition: 'ADHD', 
-      status: 'good', 
-      engagement: 85, 
-      needs: 'Break reminders',
-      gameProgress: { reading: 78, math: 65, focus: 88, social: 71 },
-      recentGames: ['Treasure Hunt Memory', 'Pizza Fractions']
-    },
-    { 
-      name: 'Emma S.', 
-      condition: 'Dyslexia', 
-      status: 'attention', 
-      engagement: 72, 
-      needs: 'Reading support',
-      gameProgress: { reading: 45, math: 82, focus: 67, social: 78 },
-      recentGames: ['Safari Word Adventure', 'Emotion Garden']
-    },
-    { 
-      name: 'Jake R.', 
-      condition: 'Autism', 
-      status: 'good', 
-      engagement: 90, 
-      needs: 'Social prompts',
-      gameProgress: { reading: 85, math: 79, focus: 72, social: 92 },
-      recentGames: ['Emotion Garden', 'Safari Word Adventure']
-    },
-    { 
-      name: 'Maya P.', 
-      condition: 'Suspected ADHD', 
-      status: 'monitor', 
-      engagement: 68, 
-      needs: 'Focus strategies',
-      gameProgress: { reading: 62, math: 58, focus: 45, social: 69 },
-      recentGames: ['Treasure Hunt Memory']
-    }
-  ];
+  // Transform demo data for teacher view
+  const students = teacherStudents.map(child => {
+    const recentGames = ['Safari Word Adventure', 'Treasure Hunt Memory', 'Pizza Fractions', 'Emotion Garden'];
+    const condition = child.learningDifferences[0] || 'General';
+    const engagement = Math.floor(Math.random() * 30) + 70; // 70-100
+    
+    return {
+      name: child.name,
+      condition,
+      status: engagement > 85 ? 'good' : engagement > 70 ? 'attention' : 'monitor',
+      engagement,
+      needs: condition === 'ADHD' ? 'Break reminders' : 
+             condition === 'Dyslexia' ? 'Reading support' :
+             condition === 'Autism Spectrum' ? 'Social prompts' : 'Focus strategies',
+      gameProgress: { 
+        reading: Math.floor(Math.random() * 40) + 60, 
+        math: Math.floor(Math.random() * 40) + 60, 
+        focus: Math.floor(Math.random() * 40) + 60, 
+        social: Math.floor(Math.random() * 40) + 60 
+      },
+      recentGames: recentGames.slice(0, 2)
+    };
+  });
 
-  const aiSuggestions = [
-    {
-      student: 'Alex M.',
-      suggestion: 'Alex excelled in Treasure Hunt Memory game (88% focus score). Try similar sequence-based activities in math class.',
-      type: 'game-insight'
-    },
-    {
-      student: 'Emma S.',
-      suggestion: 'Reading games show 45% accuracy. Assign Safari Word Adventure as homework to reinforce phonics.',
-      type: 'game-recommendation'
-    },
-    {
-      student: 'Jake R.',
-      suggestion: 'Emotion Garden game shows 92% social skills progress. Ready for peer interaction activities.',
-      type: 'milestone'
-    },
-    {
-      student: 'Maya P.',
-      suggestion: 'Focus games show declining performance. Consider shorter task intervals and more frequent breaks.',
-      type: 'alert'
-    }
-  ];
+  // Transform demo insights for teacher view
+  const aiSuggestions = teacherInsights.map(insight => ({
+    student: teacherStudents.find(s => s.id === insight.childId)?.name || 'Student',
+    suggestion: insight.description,
+    type: insight.type === 'recommendation' ? 'game-recommendation' : 
+          insight.type === 'milestone' ? 'milestone' : 
+          insight.type === 'alert' ? 'alert' : 'game-insight'
+  }));
 
-  const parentMessages = [
-    { parent: 'Sarah M. (Alex)', message: 'Alex had a great evening completing homework! Used timer method.', time: '2h ago', unread: true },
-    { parent: 'Tom S. (Emma)', message: 'Emma practiced reading for 20 minutes yesterday. Saw improvement!', time: '5h ago', unread: false },
-    { parent: 'Lisa R. (Jake)', message: 'Thanks for the social stories recommendation. Jake loves them!', time: '1d ago', unread: false }
-  ];
+  // Transform demo messages for teacher view  
+  const parentMessages = teacherMessages.slice(0, 3).map(msg => ({
+    parent: `${msg.senderName} (${teacherStudents.find(s => s.parentId === msg.senderId)?.name || 'Student'})`,
+    message: msg.content.substring(0, 80) + '...',
+    time: new Date(msg.timestamp).toLocaleDateString() === new Date().toLocaleDateString() ? 
+          Math.floor((new Date().getTime() - new Date(msg.timestamp).getTime()) / (1000 * 60 * 60)) + 'h ago' :
+          new Date(msg.timestamp).toLocaleDateString(),
+    unread: !msg.read
+  }));
 
   if (showAIInsights) {
     return (

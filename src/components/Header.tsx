@@ -1,18 +1,20 @@
 import React from 'react';
-import { Brain, Menu, Bell, User } from 'lucide-react';
+import { Brain, Bell } from 'lucide-react';
+import { User as UserType } from '../data/demoData';
 
 interface HeaderProps {
-  currentRole: string;
-  onRoleChange: (role: string) => void;
+  currentUser: UserType;
+  onUserChange: (userId: string) => void;
+  allUsers: UserType[];
 }
 
-export const Header: React.FC<HeaderProps> = ({ currentRole, onRoleChange }) => {
-  const roles = [
-    { id: 'parent', label: 'Parent', color: 'bg-blue-500' },
-    { id: 'teacher', label: 'Teacher', color: 'bg-green-500' },
-    { id: 'child', label: 'Child', color: 'bg-purple-500' },
-    { id: 'therapist', label: 'Therapist', color: 'bg-orange-500' }
-  ];
+export const Header: React.FC<HeaderProps> = ({ currentUser, onUserChange, allUsers }) => {
+  const roleColors = {
+    parent: 'bg-blue-500',
+    teacher: 'bg-green-500',
+    child: 'bg-purple-500',
+    therapist: 'bg-orange-500'
+  };
 
   return (
     <header className="bg-white shadow-sm border-b border-gray-200">
@@ -29,30 +31,35 @@ export const Header: React.FC<HeaderProps> = ({ currentRole, onRoleChange }) => 
           </div>
 
           <div className="flex items-center space-x-4">
-            <div className="flex space-x-1 bg-gray-100 rounded-lg p-1">
-              {roles.map((role) => (
-                <button
-                  key={role.id}
-                  onClick={() => onRoleChange(role.id)}
-                  className={`px-3 py-1 rounded-md text-sm font-medium transition-all duration-200 ${
-                    currentRole === role.id
-                      ? `${role.color} text-white shadow-sm`
-                      : 'text-gray-600 hover:text-gray-900 hover:bg-gray-200'
-                  }`}
-                >
-                  {role.label}
-                </button>
-              ))}
+            {/* User Switcher for Demo */}
+            <div className="flex items-center space-x-2">
+              <select
+                value={currentUser.id}
+                onChange={(e) => onUserChange(e.target.value)}
+                className="px-3 py-1 rounded-md border border-gray-300 text-sm font-medium bg-white text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                {allUsers.map((user) => (
+                  <option key={user.id} value={user.id}>
+                    {user.profileImage} {user.name} ({user.role})
+                  </option>
+                ))}
+              </select>
             </div>
 
             <div className="flex items-center space-x-2">
+              <span className={`px-3 py-1 rounded-full text-xs font-medium text-white ${roleColors[currentUser.role as keyof typeof roleColors]}`}>
+                {currentUser.role.charAt(0).toUpperCase() + currentUser.role.slice(1)}
+              </span>
+              
               <button className="p-2 text-gray-400 hover:text-gray-500 relative">
                 <Bell className="h-5 w-5" />
                 <span className="absolute -top-1 -right-1 h-3 w-3 bg-red-500 rounded-full"></span>
               </button>
-              <button className="p-2 text-gray-400 hover:text-gray-500">
-                <User className="h-5 w-5" />
-              </button>
+              
+              <div className="flex items-center space-x-2">
+                <span className="text-lg">{currentUser.profileImage}</span>
+                <span className="text-sm font-medium text-gray-700">{currentUser.name}</span>
+              </div>
             </div>
           </div>
         </div>

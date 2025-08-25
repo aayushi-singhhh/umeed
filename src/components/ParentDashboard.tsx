@@ -2,40 +2,45 @@ import React, { useState } from 'react';
 import { Calendar, MessageCircle, Award, TrendingUp, Users, BookOpen, Heart, Clock, Brain, AlertCircle, CheckCircle, Star, Lightbulb, Phone, Video, Coffee, Zap, Target, Activity } from 'lucide-react';
 import { GameProgress } from './GameProgress';
 import { AILearningCoach } from './AILearningCoach';
+import { demoChildren, demoLearningMetrics, demoGameProgress, demoAIInsights, demoMessages, weeklyProgressData } from '../data/demoData';
 
 export const ParentDashboard: React.FC = () => {
   const [selectedTimeframe, setSelectedTimeframe] = useState('today');
   const [showStressSupport, setShowStressSupport] = useState(false);
   const [activeTab, setActiveTab] = useState('overview');
+  const [selectedChildId, setSelectedChildId] = useState('child1');
+
+  // Get data for current parent (demo: Sarah Johnson - parent1)
+  const parentChildren = demoChildren.filter(child => child.parentId === 'parent1');
+  const selectedChild = parentChildren.find(child => child.id === selectedChildId) || parentChildren[0];
+  const childMetrics = demoLearningMetrics.find(metric => metric.childId === selectedChildId);
+  const childGameProgress = demoGameProgress;
+  const childInsights = demoAIInsights.filter(insight => insight.childId === selectedChildId);
+  const parentMessages = demoMessages.filter(msg => msg.recipientId === 'parent1' || msg.senderId === 'parent1');
 
   // Sample learning data for AI Coach
   const learningData = {
     child: {
-      name: 'Alex',
-      age: 8,
-      learningDifferences: ['ADHD', 'Dyslexia'],
-      interests: ['dinosaurs', 'space', 'building blocks']
+      name: selectedChild?.name || 'Alex',
+      age: selectedChild?.age || 8,
+      learningDifferences: selectedChild?.learningDifferences || ['ADHD', 'Dyslexia'],
+      interests: selectedChild?.interests || ['dinosaurs', 'space', 'building blocks']
     },
     dailyMetrics: {
-      tasksCompleted: 7,
-      totalTasks: 10,
-      focusTime: 23,
-      mood: 'happy',
-      gameScores: {
+      tasksCompleted: childMetrics?.tasksCompleted || 7,
+      totalTasks: childMetrics?.totalTasks || 10,
+      focusTime: childMetrics?.focusTime || 23,
+      mood: childMetrics?.mood || 'happy',
+      gameScores: childMetrics?.gameScores || {
         reading: 78,
         math: 65,
         focus: 88,
         social: 71
       },
-      streakDays: 5,
-      badgesEarned: ['Reading Wizard', 'Focus Champion']
+      streakDays: childMetrics?.streakDays || 5,
+      badgesEarned: childMetrics?.badgesEarned || ['Reading Wizard', 'Focus Champion']
     },
-    weeklyProgress: {
-      readingFluency: { current: 75, change: 8 },
-      taskIndependence: { current: 82, change: 5 },
-      socialInteraction: { current: 68, change: 12 },
-      emotionalRegulation: { current: 71, change: 15 }
-    },
+    weeklyProgress: weeklyProgressData[selectedChildId as keyof typeof weeklyProgressData] || weeklyProgressData.child1,
     patterns: {
       bestLearningTime: 'morning',
       frustrationTriggers: ['complex instructions', 'evening tasks'],
@@ -45,13 +50,13 @@ export const ParentDashboard: React.FC = () => {
   };
 
   const dailySnapshot = {
-    tasksCompleted: 7,
-    totalTasks: 10,
-    mood: 'happy',
-    focusTime: 23,
+    tasksCompleted: childMetrics?.tasksCompleted || 7,
+    totalTasks: childMetrics?.totalTasks || 10,
+    mood: childMetrics?.mood || 'happy',
+    focusTime: childMetrics?.focusTime || 23,
     focusImprovement: 5,
     newWordsRead: 5,
-    aiSummary: "Alex had a wonderful day! They completed the Safari Word Adventure game and learned 5 new animal names, focused for 23 minutes during the Pizza Fractions game (5 minutes longer than last week), and showed great empathy in the Emotion Garden puzzle. The AI detected improved confidence in reading tasks!"
+    aiSummary: `${selectedChild?.name || 'Alex'} had a wonderful day! They completed the Safari Word Adventure game and learned 5 new animal names, focused for ${childMetrics?.focusTime || 23} minutes during the Pizza Fractions game (5 minutes longer than last week), and showed great empathy in the Emotion Garden puzzle. The AI detected improved confidence in reading tasks!`
   };
 
   const gameInsights = [
@@ -296,21 +301,84 @@ export const ParentDashboard: React.FC = () => {
     );
   }
 
+  // Show AI coaching interface if requested
+  if (activeTab === 'ai-coach') {
+    return (
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="mb-6">
+          <button
+            onClick={() => setActiveTab('overview')}
+            className="text-blue-600 hover:text-blue-800 mb-4"
+          >
+            ← Back to Dashboard
+          </button>
+        </div>
+        <AILearningCoach learningData={learningData} userRole="parent" />
+      </div>
+    );
+  }
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      {/* Header with Stress Support */}
-      <div className="flex justify-between items-start mb-8">
-        <div>
-          <h2 className="text-3xl font-bold text-gray-900">Welcome back, Sarah!</h2>
-          <p className="text-gray-600 mt-2">Here's how Alex is progressing today</p>
+      {/* Header with child selector */}
+      <div className="mb-8">
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-3xl font-bold text-gray-900">
+              Good morning, Sarah! 👋
+            </h2>
+            <p className="text-gray-600 mt-2">Here's how your children are doing today</p>
+          </div>
+          
+          {/* Child Selector */}
+          <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-2">
+              <span className="text-sm font-medium text-gray-600">Viewing:</span>
+              <select
+                value={selectedChildId}
+                onChange={(e) => setSelectedChildId(e.target.value)}
+                className="px-3 py-2 border border-gray-300 rounded-lg text-sm font-medium bg-white text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                {parentChildren.map((child) => (
+                  <option key={child.id} value={child.id}>
+                    {child.profileImage} {child.name} ({child.age}y)
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
         </div>
-        <button
-          onClick={() => setShowStressSupport(true)}
-          className="flex items-center space-x-2 px-4 py-2 bg-gradient-to-r from-pink-500 to-rose-500 text-white rounded-lg hover:from-pink-600 hover:to-rose-600 transition-all duration-200"
-        >
-          <Heart className="h-4 w-4" />
-          <span className="text-sm font-medium">Parent Support</span>
-        </button>
+
+        {/* Child overview card */}
+        <div className="mt-6 bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl p-6 border border-blue-200">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-4">
+              <div className="text-4xl">{selectedChild?.profileImage}</div>
+              <div>
+                <h3 className="text-xl font-bold text-gray-900">{selectedChild?.name}</h3>
+                <p className="text-gray-600">{selectedChild?.grade} • {selectedChild?.learningDifferences.join(', ')}</p>
+                <div className="flex flex-wrap gap-2 mt-2">
+                  {selectedChild?.interests.slice(0, 3).map((interest, index) => (
+                    <span key={index} className="px-2 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-medium">
+                      {interest}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            </div>
+            
+            <div className="text-right">
+              <div className="text-2xl font-bold text-green-600">{childMetrics?.streakDays || 5} days</div>
+              <div className="text-sm text-gray-600">Learning streak</div>
+              <button
+                onClick={() => setActiveTab('ai-coach')}
+                className="mt-2 px-4 py-2 bg-purple-500 text-white rounded-lg text-sm font-medium hover:bg-purple-600 transition-colors"
+              >
+                AI Coach Insights
+              </button>
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Daily Snapshot Card */}

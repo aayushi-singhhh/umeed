@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Header } from './components/Header';
 import { OnboardingChatbot } from './components/OnboardingChatbot';
 import { ParentDashboard } from './components/ParentDashboard';
@@ -7,11 +7,14 @@ import { ChildDashboard } from './components/ChildDashboard';
 import { TherapistDashboard } from './components/TherapistDashboard';
 import { CommunityHub } from './components/CommunityHub';
 import { Home, Users, MessageCircle, Calendar, Settings, HelpCircle } from 'lucide-react';
+import { demoUsers } from './data/demoData';
 
 function App() {
-  const [currentRole, setCurrentRole] = useState('parent');
+  const [currentUserId, setCurrentUserId] = useState('parent1');
   const [currentView, setCurrentView] = useState('dashboard');
   const [showOnboarding, setShowOnboarding] = useState(false);
+
+  const currentUser = demoUsers.find(user => user.id === currentUserId) || demoUsers[0];
 
   const navigationItems = [
     { id: 'dashboard', label: 'Dashboard', icon: Home },
@@ -50,7 +53,7 @@ function App() {
         return <CommunityHub />;
       case 'dashboard':
       default:
-        switch (currentRole) {
+        switch (currentUser.role) {
           case 'parent':
             return <ParentDashboard />;
           case 'teacher':
@@ -71,7 +74,11 @@ function App() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <Header currentRole={currentRole} onRoleChange={setCurrentRole} />
+      <Header 
+        currentUser={currentUser} 
+        onUserChange={setCurrentUserId} 
+        allUsers={demoUsers}
+      />
       
       <div className="flex">
         <nav className="w-64 bg-white shadow-sm min-h-screen border-r border-gray-200">
