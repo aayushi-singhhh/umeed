@@ -3,7 +3,8 @@ import { Star, Trophy, Gift, Play, Book, Heart, Sparkles, Volume2, Pause, Rotate
 import { GameSelector } from './games/GameSelector';
 import { GameProgress } from './GameProgress';
 import { AILearningCoach } from './AILearningCoach';
-import { demoChildren, demoLearningMetrics, demoGameProgress } from '../data/demoData';
+import { useAuth } from '../contexts/AuthContext';
+import { useChildProgress, useExercises } from '../hooks/useAPI';
 
 export const ChildDashboard: React.FC = () => {
   const [selectedActivity, setSelectedActivity] = useState<string | null>(null);
@@ -13,11 +14,22 @@ export const ChildDashboard: React.FC = () => {
   const [showCelebration, setShowCelebration] = useState(false);
   const [showGames, setShowGames] = useState(false);
   const [showAICoach, setShowAICoach] = useState(false);
+  
+  const { user } = useAuth();
+  
+  // For child users, get their own progress
+  const childId = user?.role === 'child' ? user.id : user?.children?.[0];
+  const { data: childProgress, isLoading } = useChildProgress(childId);
+  const { data: exercises = [] } = useExercises({ childId });
 
-  // Get demo data for Alex (child1)
-  const childData = demoChildren.find(child => child.id === 'child1') || demoChildren[0];
-  const childMetrics = demoLearningMetrics.find(metric => metric.childId === 'child1');
-  const [score, setScore] = useState(childMetrics?.gameScores.reading || 142);
+  const [score, setScore] = useState(0);
+  
+  // Update score when childProgress loads
+  useEffect(() => {
+    if (childProgress?.gameScores?.reading) {
+      setScore(childProgress.gameScores.reading);
+    }
+  }, [childProgress]);
 
   const [dailyMissions, setDailyMissions] = useState([
     { id: 1, title: 'Safari Word Adventure', type: 'reading', completed: false, difficulty: 'easy', points: 15 },
@@ -25,8 +37,33 @@ export const ChildDashboard: React.FC = () => {
     { id: 3, title: 'Emotion Garden', type: 'social', completed: false, difficulty: 'easy', points: 12 }
   ]);
 
+  // Update missions from API exercises
+  useEffect(() => {
+    if (exercises.length > 0) {
+      const missions = exercises.slice(0, 3).map((exercise: any, index: number) => ({
+        id: index + 1,
+        title: exercise.title,
+        type: exercise.type,
+        completed: exercise.completed || false,
+        difficulty: exercise.difficulty || 'easy',
+        points: exercise.points || 15
+      }));
+      setDailyMissions(missions);
+    }
+  }, [exercises]);
+
   // Animated buddy states
   const [buddyState, setBuddyState] = useState<'idle' | 'cheering' | 'thinking'>('idle');
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 p-6">
+        <div className="flex items-center justify-center h-64">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        </div>
+      </div>
+    );
+  }
 
   const questMap = [
     { 

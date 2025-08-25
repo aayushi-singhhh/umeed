@@ -2,101 +2,138 @@ import React, { useState } from 'react';
 import { Calendar, MessageCircle, Award, TrendingUp, Users, BookOpen, Heart, Clock, Brain, AlertCircle, CheckCircle, Star, Lightbulb, Phone, Video, Coffee, Zap, Target, Activity } from 'lucide-react';
 import { GameProgress } from './GameProgress';
 import { AILearningCoach } from './AILearningCoach';
-import { demoChildren, demoLearningMetrics, demoGameProgress, demoAIInsights, demoMessages, weeklyProgressData } from '../data/demoData';
+import { useChildren, useChildProgress, useChildAnalytics, useNotifications } from '../hooks/useAPI';
+import { useAuth } from '../contexts/AuthContext';
 
 export const ParentDashboard: React.FC = () => {
   const [selectedTimeframe, setSelectedTimeframe] = useState('today');
   const [showStressSupport, setShowStressSupport] = useState(false);
   const [activeTab, setActiveTab] = useState('overview');
-  const [selectedChildId, setSelectedChildId] = useState('child1');
+  const [selectedChildId, setSelectedChildId] = useState('');
+  const { user } = useAuth();
 
-  // Get data for current parent (demo: Sarah Johnson - parent1)
-  const parentChildren = demoChildren.filter(child => child.parentId === 'parent1');
-  const selectedChild = parentChildren.find(child => child.id === selectedChildId) || parentChildren[0];
-  const childMetrics = demoLearningMetrics.find(metric => metric.childId === selectedChildId);
-  const childGameProgress = demoGameProgress;
-  const childInsights = demoAIInsights.filter(insight => insight.childId === selectedChildId);
-  const parentMessages = demoMessages.filter(msg => msg.recipientId === 'parent1' || msg.senderId === 'parent1');
+  // Fetch real data from API
+  const { data: children = [], isLoading: childrenLoading } = useChildren();
+  const { data: childProgress, isLoading: progressLoading } = useChildProgress(selectedChildId);
+  const { data: childAnalytics, isLoading: analyticsLoading } = useChildAnalytics(selectedChildId);
+  const { data: notifications = [] } = useNotifications();
+
+  // Set default selected child when children are loaded
+  React.useEffect(() => {
+    if (children.length > 0 && !selectedChildId) {
+      setSelectedChildId(children[0]._id);
+    }
+  }, [children, selectedChildId]);
+
+  if (childrenLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-purple-50 to-pink-50 p-6">
+        <div className="flex items-center justify-center h-64">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600"></div>
+        </div>
+      </div>
+    );
+  }
+
+  const selectedChild = children.find(child => child._id === selectedChildId) || children[0];
+  
+  if (!selectedChild) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-purple-50 to-pink-50 p-6">
+        <div className="max-w-4xl mx-auto">
+          <div className="bg-white rounded-xl shadow-lg p-8 text-center">
+            <h2 className="text-2xl font-bold text-gray-800 mb-4">No Children Found</h2>
+            <p className="text-gray-600">You don't have any children registered yet. Please contact support or add a child profile.</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   // Sample learning data for AI Coach
   const learningData = {
     child: {
-      name: selectedChild?.name || 'Alex',
+      name: selectedChild?.name || 'Child',
       age: selectedChild?.age || 8,
-      learningDifferences: selectedChild?.learningDifferences || ['ADHD', 'Dyslexia'],
-      interests: selectedChild?.interests || ['dinosaurs', 'space', 'building blocks']
+      learningDifferences: selectedChild?.learningDifferences || [],
+      interests: selectedChild?.interests || []
     },
     dailyMetrics: {
-      tasksCompleted: childMetrics?.tasksCompleted || 7,
-      totalTasks: childMetrics?.totalTasks || 10,
-      focusTime: childMetrics?.focusTime || 23,
-      mood: childMetrics?.mood || 'happy',
-      gameScores: childMetrics?.gameScores || {
-        reading: 78,
-        math: 65,
-        focus: 88,
-        social: 71
+      tasksCompleted: childProgress?.tasksCompleted || 0,
+      totalTasks: childProgress?.totalTasks || 0,
+      focusTime: childProgress?.focusTime || 0,
+      mood: childProgress?.mood || 'neutral',
+      gameScores: childProgress?.gameScores || {
+        reading: 0,
+        math: 0,
+        focus: 0,
+        social: 0
       },
-      streakDays: childMetrics?.streakDays || 5,
-      badgesEarned: childMetrics?.badgesEarned || ['Reading Wizard', 'Focus Champion']
+      streakDays: childProgress?.streakDays || 0,
+      badgesEarned: childProgress?.badgesEarned || []
     },
-    weeklyProgress: weeklyProgressData[selectedChildId as keyof typeof weeklyProgressData] || weeklyProgressData.child1,
-    patterns: {
+    weeklyProgress: childAnalytics?.weeklyProgress || {
+      readingFluency: { current: 0, change: 0 },
+      taskIndependence: { current: 0, change: 0 },
+      socialInteraction: { current: 0, change: 0 },
+      emotionalRegulation: { current: 0, change: 0 }
+    },
+    patterns: childAnalytics?.patterns || {
       bestLearningTime: 'morning',
-      frustrationTriggers: ['complex instructions', 'evening tasks'],
-      engagementBoosts: ['dinosaur themes', 'movement breaks', 'visual cues'],
-      taskAvoidance: ['writing tasks after 4 PM', 'multi-step instructions']
+      frustrationTriggers: [],
+      engagementBoosts: [],
+      taskAvoidance: []
     }
   };
 
   const dailySnapshot = {
-    tasksCompleted: childMetrics?.tasksCompleted || 7,
-    totalTasks: childMetrics?.totalTasks || 10,
-    mood: childMetrics?.mood || 'happy',
-    focusTime: childMetrics?.focusTime || 23,
-    focusImprovement: 5,
-    newWordsRead: 5,
-    aiSummary: `${selectedChild?.name || 'Alex'} had a wonderful day! They completed the Safari Word Adventure game and learned 5 new animal names, focused for ${childMetrics?.focusTime || 23} minutes during the Pizza Fractions game (5 minutes longer than last week), and showed great empathy in the Emotion Garden puzzle. The AI detected improved confidence in reading tasks!`
+    tasksCompleted: childProgress?.tasksCompleted || 0,
+    totalTasks: childProgress?.totalTasks || 0,
+    mood: childProgress?.mood || 'neutral',
+    focusTime: childProgress?.focusTime || 0,
+    focusImprovement: childProgress?.focusImprovement || 0,
+    newWordsRead: childProgress?.newWordsRead || 0,
+    aiSummary: childProgress?.aiSummary || `${selectedChild?.name || 'Your child'} is making great progress! Keep up the good work with consistent practice and engagement.`
   };
 
   const gameInsights = [
-    { type: 'reading', score: 85, timeSpent: 12, accuracy: 78, improvement: 15 },
-    { type: 'math', score: 72, timeSpent: 8, accuracy: 65, improvement: 8 },
-    { type: 'focus', score: 90, timeSpent: 15, accuracy: 88, improvement: 22 },
-    { type: 'social', score: 68, timeSpent: 10, accuracy: 71, improvement: 12 }
+    { 
+      type: 'reading', 
+      score: childProgress?.gameScores?.reading || 0, 
+      timeSpent: childProgress?.timeSpent?.reading || 0, 
+      accuracy: childProgress?.accuracy?.reading || 0, 
+      improvement: childProgress?.improvement?.reading || 0 
+    },
+    { 
+      type: 'math', 
+      score: childProgress?.gameScores?.math || 0, 
+      timeSpent: childProgress?.timeSpent?.math || 0, 
+      accuracy: childProgress?.accuracy?.math || 0, 
+      improvement: childProgress?.improvement?.math || 0 
+    },
+    { 
+      type: 'focus', 
+      score: childProgress?.gameScores?.focus || 0, 
+      timeSpent: childProgress?.timeSpent?.focus || 0, 
+      accuracy: childProgress?.accuracy?.focus || 0, 
+      improvement: childProgress?.improvement?.focus || 0 
+    },
+    { 
+      type: 'social', 
+      score: childProgress?.gameScores?.social || 0, 
+      timeSpent: childProgress?.timeSpent?.social || 0, 
+      accuracy: childProgress?.accuracy?.social || 0, 
+      improvement: childProgress?.improvement?.social || 0 
+    }
   ];
-  const aiCoachingTips = [
+  const aiCoachingTips = childAnalytics?.tips || [
     {
       type: 'timing',
       icon: '⏰',
-      title: 'Optimal Learning Window',
-      tip: "Alex focuses best between 9-11 AM. Try scheduling reading activities during this golden window.",
-      confidence: 'high',
-      basedOn: '2 weeks of data'
-    },
-    {
-      type: 'strategy',
-      icon: '🎯',
-      title: 'Task Chunking Success',
-      tip: "Breaking homework into 10-minute chunks with 2-minute breaks has increased completion by 40%.",
-      confidence: 'high',
-      basedOn: 'Last 10 sessions'
-    },
-    {
-      type: 'social',
-      icon: '🤝',
-      title: 'Social Skills Opportunity',
-      tip: "Alex is ready for more peer interaction. Consider arranging a playdate this weekend.",
+      title: 'Keep Building Routines',
+      tip: "Consistent practice times help build learning habits.",
       confidence: 'medium',
-      basedOn: 'Progress in social stories'
-    },
-    {
-      type: 'wellness',
-      icon: '🧘‍♀️',
-      title: 'Stress Signal Detected',
-      tip: "Alex showed signs of overwhelm yesterday afternoon. Try the bubble breathing exercise before challenging tasks.",
-      confidence: 'high',
-      basedOn: 'Interaction patterns'
+      basedOn: 'General best practices'
     }
   ];
 
@@ -339,9 +376,9 @@ export const ParentDashboard: React.FC = () => {
                 onChange={(e) => setSelectedChildId(e.target.value)}
                 className="px-3 py-2 border border-gray-300 rounded-lg text-sm font-medium bg-white text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
-                {parentChildren.map((child) => (
-                  <option key={child.id} value={child.id}>
-                    {child.profileImage} {child.name} ({child.age}y)
+                {children.map((child: any) => (
+                  <option key={child._id} value={child._id}>
+                    {child.name} ({child.age}y)
                   </option>
                 ))}
               </select>
@@ -358,7 +395,7 @@ export const ParentDashboard: React.FC = () => {
                 <h3 className="text-xl font-bold text-gray-900">{selectedChild?.name}</h3>
                 <p className="text-gray-600">{selectedChild?.grade} • {selectedChild?.learningDifferences.join(', ')}</p>
                 <div className="flex flex-wrap gap-2 mt-2">
-                  {selectedChild?.interests.slice(0, 3).map((interest, index) => (
+                  {selectedChild?.interests?.slice(0, 3).map((interest: string, index: number) => (
                     <span key={index} className="px-2 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-medium">
                       {interest}
                     </span>
@@ -368,7 +405,7 @@ export const ParentDashboard: React.FC = () => {
             </div>
             
             <div className="text-right">
-              <div className="text-2xl font-bold text-green-600">{childMetrics?.streakDays || 5} days</div>
+              <div className="text-2xl font-bold text-green-600">{childProgress?.streakDays || 0} days</div>
               <div className="text-sm text-gray-600">Learning streak</div>
               <button
                 onClick={() => setActiveTab('ai-coach')}

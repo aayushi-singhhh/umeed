@@ -1,17 +1,30 @@
 import React, { useState } from 'react';
 import { Users, BookOpen, MessageSquare, Lightbulb, AlertCircle, CheckCircle } from 'lucide-react';
 import { AILearningCoach } from './AILearningCoach';
-import { demoChildren, demoMessages, demoAIInsights } from '../data/demoData';
+import { useAuth } from '../contexts/AuthContext';
+import { useChildren, useChildProgress, useExercises, useNotifications } from '../hooks/useAPI';
 
 export const TeacherDashboard: React.FC = () => {
   const [showAIInsights, setShowAIInsights] = useState(false);
+  const { user } = useAuth();
 
-  // Get teacher's students (Ms. Rodriguez - teacher1)
-  const teacherStudents = demoChildren.filter(child => child.teacherId === 'teacher1');
-  const teacherMessages = demoMessages.filter(msg => msg.recipientId === 'teacher1' || msg.senderId === 'teacher1');
-  const teacherInsights = demoAIInsights.filter(insight => 
-    teacherStudents.some(student => student.id === insight.childId)
-  );
+  // Fetch real data from API
+  const { data: children = [], isLoading: childrenLoading } = useChildren();
+  const { data: exercises = [] } = useExercises();
+  const { data: notifications = [] } = useNotifications();
+
+  // Filter children assigned to this teacher
+  const teacherStudents = children.filter((child: any) => child.teacherId === user?.id);
+
+  if (childrenLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-indigo-50 to-blue-50 p-6">
+        <div className="flex items-center justify-center h-64">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
+        </div>
+      </div>
+    );
+  }
 
   // Sample learning data for AI Coach (teacher perspective)
   const learningData = {
@@ -49,10 +62,10 @@ export const TeacherDashboard: React.FC = () => {
     }
   };
 
-  // Transform demo data for teacher view
-  const students = teacherStudents.map(child => {
+  // Transform API data for teacher view
+  const students = teacherStudents.map((child: any) => {
     const recentGames = ['Safari Word Adventure', 'Treasure Hunt Memory', 'Pizza Fractions', 'Emotion Garden'];
-    const condition = child.learningDifferences[0] || 'General';
+    const condition = child.learningDifferences?.[0] || 'General';
     const engagement = Math.floor(Math.random() * 30) + 70; // 70-100
     
     return {
@@ -73,24 +86,24 @@ export const TeacherDashboard: React.FC = () => {
     };
   });
 
-  // Transform demo insights for teacher view
-  const aiSuggestions = teacherInsights.map(insight => ({
-    student: teacherStudents.find(s => s.id === insight.childId)?.name || 'Student',
-    suggestion: insight.description,
-    type: insight.type === 'recommendation' ? 'game-recommendation' : 
-          insight.type === 'milestone' ? 'milestone' : 
-          insight.type === 'alert' ? 'alert' : 'game-insight'
-  }));
+  // Placeholder AI suggestions
+  const aiSuggestions = [
+    {
+      student: 'All Students',
+      suggestion: 'Consider implementing visual learning aids for better engagement',
+      type: 'game-recommendation'
+    }
+  ];
 
-  // Transform demo messages for teacher view  
-  const parentMessages = teacherMessages.slice(0, 3).map(msg => ({
-    parent: `${msg.senderName} (${teacherStudents.find(s => s.parentId === msg.senderId)?.name || 'Student'})`,
-    message: msg.content.substring(0, 80) + '...',
-    time: new Date(msg.timestamp).toLocaleDateString() === new Date().toLocaleDateString() ? 
-          Math.floor((new Date().getTime() - new Date(msg.timestamp).getTime()) / (1000 * 60 * 60)) + 'h ago' :
-          new Date(msg.timestamp).toLocaleDateString(),
-    unread: !msg.read
-  }));
+  // Placeholder parent messages  
+  const parentMessages = [
+    {
+      parent: 'Parent Communication',
+      message: 'No recent messages from parents...',
+      time: 'No recent activity',
+      unread: false
+    }
+  ];
 
   if (showAIInsights) {
     return (
