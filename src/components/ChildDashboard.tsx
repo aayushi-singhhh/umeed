@@ -1,35 +1,30 @@
 import React, { useState, useEffect } from 'react';
-import { Star, Trophy, Gift, Play, Book, Heart, Sparkles, Volume2, Pause, RotateCcw, Wind } from 'lucide-react';
+import { Star, Trophy, Gift, Sparkles, Wind } from 'lucide-react';
 import { GameSelector } from './games/GameSelector';
-import { GameProgress } from './GameProgress';
 import { AILearningCoach } from './AILearningCoach';
-import { useAuth } from '../contexts/AuthContext';
-import { useChildProgress, useExercises } from '../hooks/useAPI';
 
 export const ChildDashboard: React.FC = () => {
-  const [selectedActivity, setSelectedActivity] = useState<string | null>(null);
   const [currentMood, setCurrentMood] = useState<string>('happy');
   const [showBreathingExercise, setShowBreathingExercise] = useState(false);
   const [breathingPhase, setBreathingPhase] = useState<'inhale' | 'exhale'>('inhale');
   const [showCelebration, setShowCelebration] = useState(false);
   const [showGames, setShowGames] = useState(false);
   const [showAICoach, setShowAICoach] = useState(false);
-  
-  const { user } = useAuth();
-  
-  // For child users, get their own progress
-  const childId = user?.role === 'child' ? user.id : user?.children?.[0];
-  const { data: childProgress, isLoading } = useChildProgress(childId);
-  const { data: exercises = [] } = useExercises({ childId });
+  const [score, setScore] = useState(47); // Starting with mock score
 
-  const [score, setScore] = useState(0);
-  
-  // Update score when childProgress loads
-  useEffect(() => {
-    if (childProgress?.gameScores?.reading) {
-      setScore(childProgress.gameScores.reading);
+  // Mock child data
+  const childData = {
+    name: 'Alex',
+    level: 3,
+    totalStars: score,
+    streakDays: 5,
+    gameScores: {
+      reading: 78,
+      math: 65,
+      focus: 88,
+      social: 71
     }
-  }, [childProgress]);
+  };
 
   const [dailyMissions, setDailyMissions] = useState([
     { id: 1, title: 'Safari Word Adventure', type: 'reading', completed: false, difficulty: 'easy', points: 15 },
@@ -37,35 +32,11 @@ export const ChildDashboard: React.FC = () => {
     { id: 3, title: 'Emotion Garden', type: 'social', completed: false, difficulty: 'easy', points: 12 }
   ]);
 
-  // Update missions from API exercises
-  useEffect(() => {
-    if (exercises.length > 0) {
-      const missions = exercises.slice(0, 3).map((exercise: any, index: number) => ({
-        id: index + 1,
-        title: exercise.title,
-        type: exercise.type,
-        completed: exercise.completed || false,
-        difficulty: exercise.difficulty || 'easy',
-        points: exercise.points || 15
-      }));
-      setDailyMissions(missions);
-    }
-  }, [exercises]);
-
   // Animated buddy states
   const [buddyState, setBuddyState] = useState<'idle' | 'cheering' | 'thinking'>('idle');
 
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 p-6">
-        <div className="flex items-center justify-center h-64">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-        </div>
-      </div>
-    );
-  }
-
-  const questMap = [
+  // Quest map for potential future use
+  /* const questMap = [
     { 
       id: 1, 
       title: 'Dino Spelling Adventure', 
@@ -102,7 +73,7 @@ export const ChildDashboard: React.FC = () => {
       color: 'from-orange-400 to-red-500',
       description: 'Play fun learning games!'
     }
-  ];
+  ]; */
 
   const lifeSkillsChallenges = [
     { 
@@ -202,7 +173,7 @@ export const ChildDashboard: React.FC = () => {
     return () => clearInterval(interval);
   }, []);
 
-  const handleActivityComplete = (activityId: number) => {
+  const handleActivityComplete = (_activityId: number) => {
     setBuddyState('cheering');
     setShowCelebration(true);
     setTimeout(() => {
@@ -318,28 +289,28 @@ export const ChildDashboard: React.FC = () => {
               {buddyState === 'thinking' && <span className="text-xl animate-pulse">💭</span>}
             </div>
           </div>
-          <h1 className="text-4xl font-bold text-gray-800 mb-2">Hi Alex! 🌟</h1>
+          <h1 className="text-4xl font-bold text-gray-800 mb-2">Hi {childData.name}! 🌟</h1>
           <p className="text-xl text-gray-600">Ready for today's adventure?</p>
           
           {/* Stats Bar */}
           <div className="flex justify-center items-center space-x-8 mt-6">
             <div className="text-center">
               <div className="w-16 h-16 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-full flex items-center justify-center text-white font-bold text-xl mb-2">
-                142
+                {childData.totalStars}
               </div>
               <p className="text-sm text-gray-600">Magic Points</p>
             </div>
             <div className="text-center">
               <div className="w-16 h-16 bg-gradient-to-br from-purple-400 to-pink-500 rounded-full flex items-center justify-center text-white font-bold text-xl mb-2">
-                7
+                {childData.level + 4}
               </div>
               <p className="text-sm text-gray-600">Badges</p>
             </div>
             <div className="text-center">
               <div className="w-16 h-16 bg-gradient-to-br from-green-400 to-blue-500 rounded-full flex items-center justify-center text-white font-bold text-xl mb-2">
-                3
+                {childData.streakDays}
               </div>
-              <p className="text-sm text-gray-600">Quests Done</p>
+              <p className="text-sm text-gray-600">Day Streak</p>
             </div>
           </div>
         </div>
@@ -386,7 +357,7 @@ export const ChildDashboard: React.FC = () => {
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {dailyMissions.map((mission, index) => (
+            {dailyMissions.map((mission) => (
               <div
                 key={mission.id}
                 className={`relative p-6 rounded-2xl cursor-pointer transition-all duration-300 hover:scale-105 ${

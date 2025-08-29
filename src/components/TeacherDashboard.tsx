@@ -1,30 +1,31 @@
 import React, { useState } from 'react';
 import { Users, BookOpen, MessageSquare, Lightbulb, AlertCircle, CheckCircle } from 'lucide-react';
 import { AILearningCoach } from './AILearningCoach';
-import { useAuth } from '../contexts/AuthContext';
-import { useChildren, useChildProgress, useExercises, useNotifications } from '../hooks/useAPI';
 
 export const TeacherDashboard: React.FC = () => {
   const [showAIInsights, setShowAIInsights] = useState(false);
-  const { user } = useAuth();
 
-  // Fetch real data from API
-  const { data: children = [], isLoading: childrenLoading } = useChildren();
-  const { data: exercises = [] } = useExercises();
-  const { data: notifications = [] } = useNotifications();
-
-  // Filter children assigned to this teacher
-  const teacherStudents = children.filter((child: any) => child.teacherId === user?.id);
-
-  if (childrenLoading) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-indigo-50 to-blue-50 p-6">
-        <div className="flex items-center justify-center h-64">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
-        </div>
-      </div>
-    );
-  }
+  // Mock data for teacher's students
+  const teacherStudents = [
+    { 
+      id: '1', 
+      name: 'Alex M.', 
+      learningDifferences: ['ADHD', 'Dyslexia'], 
+      teacherId: 'teacher1' 
+    },
+    { 
+      id: '2', 
+      name: 'Sarah K.', 
+      learningDifferences: ['Autism Spectrum'], 
+      teacherId: 'teacher1' 
+    },
+    { 
+      id: '3', 
+      name: 'Jamie L.', 
+      learningDifferences: ['Dyscalculia'], 
+      teacherId: 'teacher1' 
+    }
+  ];
 
   // Sample learning data for AI Coach (teacher perspective)
   const learningData = {
