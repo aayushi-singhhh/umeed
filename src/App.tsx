@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { Header } from './components/Header';
@@ -17,8 +17,31 @@ const queryClient = new QueryClient();
 
 const MainApp = () => {
   const { isAuthenticated, user, loading, logout } = useAuth();
-  const [currentView, setCurrentView] = useState('dashboard');
+  const [currentView, setCurrentView] = useState('landing');
   const [showOnboarding, setShowOnboarding] = useState(false);
+  const [debugInfo, setDebugInfo] = useState<string>('');
+
+  // Enhanced debugging
+  useEffect(() => {
+    const debug = `User: ${user?.email || 'null'} | Role: ${user?.role || 'none'} | Loading: ${loading} | Authenticated: ${isAuthenticated} | View: ${currentView}`;
+    setDebugInfo(debug);
+    console.log('🔍 APP STATE CHANGE:', debug);
+  }, [user, loading, isAuthenticated, currentView]);
+
+  // Handle navigation based on auth state
+  useEffect(() => {
+    console.log('🔄 APP: Auth effect triggered', { user: !!user, loading, isAuthenticated, currentView });
+    
+    if (!loading) {
+      if (isAuthenticated && user) {
+        console.log('✅ APP: User authenticated, setting dashboard');
+        setCurrentView('dashboard');
+      } else if (currentView === 'dashboard') {
+        console.log('❌ APP: No user but on dashboard, redirecting to landing');
+        setCurrentView('landing');
+      }
+    }
+  }, [isAuthenticated, user, loading]);
 
   const navigationItems = [
     { id: 'dashboard', label: 'Dashboard', icon: Home },
@@ -42,6 +65,7 @@ const MainApp = () => {
   }
 
   if (!isAuthenticated) {
+    console.log('🔓 APP: User not authenticated, showing AuthPage');
     return <AuthPage />;
   }
 
@@ -80,7 +104,7 @@ const MainApp = () => {
             return <TeacherDashboard />;
           case 'child':
             return <ChildDashboard />;
-          case 'therapist':
+          case 'admin':
             return <TherapistDashboard />;
           default:
             return <ParentDashboard />;
@@ -146,6 +170,14 @@ const MainApp = () => {
             {renderCurrentView()}
           </ProtectedRoute>
         </main>
+        
+        {/* Enhanced debug info */}
+        <div className="fixed bottom-4 right-4 bg-black text-white p-3 rounded text-xs max-w-xs z-50">
+          <div className="font-bold text-green-400">DEBUG INFO:</div>
+          <div className="text-white">{debugInfo}</div>
+          <div className="mt-1 text-yellow-400">View: {currentView}</div>
+          <div className="text-blue-400">LocalStorage Token: {localStorage.getItem('token') ? 'YES' : 'NO'}</div>
+        </div>
       </div>
     </div>
   );

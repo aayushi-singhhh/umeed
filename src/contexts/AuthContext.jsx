@@ -1,27 +1,9 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import authService from '../services/auth';
+import React, { createContext, useContext, useState, useEffect } from 'react';
+import authService from '../services/auth.js';
 
-interface User {
-  id: string;
-  email: string;
-  name: string;
-  role: 'child' | 'parent' | 'teacher' | 'admin';
-  children?: string[];
-}
+const AuthContext = createContext();
 
-interface AuthContextType {
-  user: User | null;
-  loading: boolean;
-  isAuthenticated: boolean;
-  login: (email: string, password: string) => Promise<User>;
-  register: (userData: any) => Promise<User>;
-  logout: () => void;
-  createChild: (childData: any) => Promise<any>;
-}
-
-const AuthContext = createContext<AuthContextType | null>(null);
-
-export const useAuth = (): AuthContextType => {
+export const useAuth = () => {
   const context = useContext(AuthContext);
   if (!context) {
     throw new Error('useAuth must be used within an AuthProvider');
@@ -29,11 +11,7 @@ export const useAuth = (): AuthContextType => {
   return context;
 };
 
-interface AuthProviderProps {
-  children: ReactNode;
-}
-
-export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
+export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -63,38 +41,31 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     initializeAuth();
   }, []);
 
-  const login = async (email: string, password: string): Promise<User> => {
+  const login = async (credentials) => {
     try {
       setLoading(true);
-      const response = await authService.login({ email, password });
-      
-      // Store token and user data
-      localStorage.setItem('token', response.token);
-      localStorage.setItem('user', JSON.stringify(response.user));
-      
+      const response = await authService.login(credentials);
       setUser(response.user);
       setIsAuthenticated(true);
-      return response.user;
-    } catch (error: any) {
+      return response;
+    } catch (error) {
       throw error;
     } finally {
       setLoading(false);
     }
   };
 
-  const register = async (userData: any): Promise<User> => {
+  const register = async (userData) => {
     try {
       setLoading(true);
       const response = await authService.register(userData);
       // Auto-login after registration
       if (response.token) {
-        localStorage.setItem('token', response.token);
-        localStorage.setItem('user', JSON.stringify(response.user));
         setUser(response.user);
         setIsAuthenticated(true);
       }
-      return response.user;
-    } catch (error: any) {
+      return response;
+    } catch (error) {
       throw error;
     } finally {
       setLoading(false);
@@ -107,15 +78,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     } catch (error) {
       console.error('Logout error:', error);
     } finally {
-      // Clear stored auth data
-      localStorage.removeItem('token');
-      localStorage.removeItem('user');
       setUser(null);
       setIsAuthenticated(false);
     }
   };
 
-  const createChild = async (childData: any): Promise<any> => {
+  const createChild = async (childData) => {
     try {
       const response = await authService.createChild(childData);
       // Refresh user data to get updated linked children
@@ -127,7 +95,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
-  const updateUser = (updatedUser: any) => {
+  const updateUser = (updatedUser) => {
     setUser(updatedUser);
     localStorage.setItem('user', JSON.stringify(updatedUser));
   };

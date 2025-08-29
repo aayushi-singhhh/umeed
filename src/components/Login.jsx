@@ -2,11 +2,7 @@ import React, { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { Eye, EyeOff, LogIn, UserPlus } from 'lucide-react';
 
-interface LoginProps {
-  onToggleMode: () => void;
-}
-
-const Login: React.FC<LoginProps> = ({ onToggleMode }) => {
+const Login = ({ onToggleMode }) => {
   const { login } = useAuth();
   const [formData, setFormData] = useState({
     email: '',
@@ -15,16 +11,8 @@ const Login: React.FC<LoginProps> = ({ onToggleMode }) => {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [debugLog, setDebugLog] = useState<string[]>([]);
 
-  const addDebugLog = (message: string) => {
-    const timestamp = new Date().toLocaleTimeString();
-    const logEntry = `${timestamp}: ${message}`;
-    setDebugLog(prev => [...prev.slice(-4), logEntry]); // Keep last 5 logs
-    console.log('🔐 LOGIN:', logEntry);
-  };
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChange = (e) => {
     setFormData({
       ...formData,
       [e.target.name]: e.target.value
@@ -33,31 +21,16 @@ const Login: React.FC<LoginProps> = ({ onToggleMode }) => {
     if (error) setError('');
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     setError('');
-    setDebugLog([]);
-
-    addDebugLog(`Form submitted with email: ${formData.email}`);
 
     try {
-      addDebugLog('Calling login function...');
-      const result = await login(formData.email, formData.password);
-      
-      addDebugLog(`Login function returned: ${result}`);
-      
-      if (result) {
-        addDebugLog('Login successful! User should be redirected automatically by App.tsx');
-        // Don't manually navigate - let the App.tsx handle it based on auth state
-      } else {
-        addDebugLog('Login failed - invalid credentials');
-        setError('Invalid email or password');
-      }
-    } catch (error: any) {
-      addDebugLog(`Login error: ${error.message || error}`);
-      console.error('Login error:', error);
-      setError('Login failed. Please try again.');
+      await login(formData);
+      // Navigation will be handled by the auth context
+    } catch (error) {
+      setError(error.response?.data?.message || 'Login failed. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -148,23 +121,6 @@ const Login: React.FC<LoginProps> = ({ onToggleMode }) => {
               Sign up here
             </button>
           </p>
-        </div>
-
-        {/* Test account info and debug logs */}
-        <div className="mt-4 p-3 bg-gray-100 rounded text-sm">
-          <strong>Test Account:</strong><br />
-          Email: testuser@example.com<br />
-          Password: password123
-          
-          {/* Debug logs */}
-          {debugLog.length > 0 && (
-            <div className="mt-2 text-xs">
-              <strong>Debug Log:</strong>
-              {debugLog.map((log, index) => (
-                <div key={index} className="text-gray-600">{log}</div>
-              ))}
-            </div>
-          )}
         </div>
       </div>
     </div>
