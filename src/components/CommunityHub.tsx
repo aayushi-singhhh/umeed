@@ -1,22 +1,12 @@
 import React, { useState } from 'react';
-import { Users, MessageSquare, Heart, Share2, Calendar, BookOpen, Coffee } from 'lucide-react';
+import { Users, MessageSquare, Heart, Share2, Calendar, BookOpen, Coffee, X } from 'lucide-react';
 
 export const CommunityHub: React.FC = () => {
   const [activeGroup, setActiveGroup] = useState('adhd-parents');
-
-  const handleLikePost = (postId: string) => {
-    // Mock like toggle - could update local state if needed
-    console.log('Liked post:', postId);
-  };
-
-  const parentGroups = [
-    { id: 'adhd-parents', name: 'ADHD Parent Circle', members: 234, color: 'bg-blue-500', icon: '🎯' },
-    { id: 'dyslexia-support', name: 'Dyslexia Life Skills', members: 189, color: 'bg-green-500', icon: '📚' },
-    { id: 'autism-family', name: 'Autism Family Network', members: 312, color: 'bg-purple-500', icon: '🧩' },
-    { id: 'teen-support', name: 'Teen Transition Support', members: 156, color: 'bg-orange-500', icon: '🌟' }
-  ];
-
-  const recentPosts = [
+  const [showCreatePost, setShowCreatePost] = useState(false);
+  const [newPostContent, setNewPostContent] = useState('');
+  const [selectedGroup, setSelectedGroup] = useState('adhd-parents');
+  const [posts, setPosts] = useState([
     {
       id: 1,
       author: 'Sarah M.',
@@ -47,6 +37,41 @@ export const CommunityHub: React.FC = () => {
       replies: 19,
       hasLiked: true
     }
+  ]);
+
+  const handleLikePost = (postId: string) => {
+    setPosts(posts.map(post => 
+      post.id === parseInt(postId) 
+        ? { ...post, hasLiked: !post.hasLiked, likes: post.hasLiked ? post.likes - 1 : post.likes + 1 }
+        : post
+    ));
+  };
+
+  const handleCreatePost = () => {
+    if (!newPostContent.trim()) return;
+    
+    const selectedGroupData = parentGroups.find(g => g.id === selectedGroup);
+    const newPost = {
+      id: Math.max(...posts.map(p => p.id)) + 1,
+      author: 'You',
+      group: selectedGroupData?.name || 'General',
+      time: 'Just now',
+      content: newPostContent.trim(),
+      likes: 0,
+      replies: 0,
+      hasLiked: false
+    };
+    
+    setPosts([newPost, ...posts]);
+    setNewPostContent('');
+    setShowCreatePost(false);
+  };
+
+  const parentGroups = [
+    { id: 'adhd-parents', name: 'ADHD Parent Circle', members: 234, color: 'bg-blue-500', icon: '🎯' },
+    { id: 'dyslexia-support', name: 'Dyslexia Life Skills', members: 189, color: 'bg-green-500', icon: '📚' },
+    { id: 'autism-family', name: 'Autism Family Network', members: 312, color: 'bg-purple-500', icon: '🧩' },
+    { id: 'teen-support', name: 'Teen Transition Support', members: 156, color: 'bg-orange-500', icon: '🌟' }
   ];
 
   const upcomingEvents = [
@@ -122,13 +147,16 @@ export const CommunityHub: React.FC = () => {
           <div className="bg-white rounded-xl shadow-lg p-6 mb-6">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-semibold text-gray-900">Community Feed</h3>
-              <button className="px-4 py-2 bg-blue-500 text-white rounded-lg text-sm hover:bg-blue-600">
+              <button 
+                onClick={() => setShowCreatePost(true)}
+                className="px-4 py-2 bg-blue-500 text-white rounded-lg text-sm hover:bg-blue-600"
+              >
                 New Post
               </button>
             </div>
             
             <div className="space-y-6">
-              {recentPosts.map((post: any) => (
+              {posts.map((post: any) => (
                 <div key={post.id} className="border-b border-gray-200 pb-6 last:border-b-0 last:pb-0">
                   <div className="flex justify-between items-start mb-3">
                     <div>
@@ -191,6 +219,74 @@ export const CommunityHub: React.FC = () => {
           </div>
         </div>
       </div>
+      
+      {/* Create Post Modal */}
+      {showCreatePost && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-xl max-w-md w-full">
+            <div className="flex items-center justify-between p-6 border-b border-gray-200">
+              <h3 className="text-lg font-semibold text-gray-900">Create New Post</h3>
+              <button
+                onClick={() => setShowCreatePost(false)}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <X className="h-6 w-6" />
+              </button>
+            </div>
+            
+            <div className="p-6">
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Post to Group
+                </label>
+                <select
+                  value={selectedGroup}
+                  onChange={(e) => setSelectedGroup(e.target.value)}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  {parentGroups.map((group) => (
+                    <option key={group.id} value={group.id}>
+                      {group.icon} {group.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              
+              <div className="mb-6">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  What's on your mind?
+                </label>
+                <textarea
+                  value={newPostContent}
+                  onChange={(e) => setNewPostContent(e.target.value)}
+                  placeholder="Share your thoughts, ask for advice, or celebrate a win..."
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 h-32 resize-none focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  maxLength={500}
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  {newPostContent.length}/500 characters
+                </p>
+              </div>
+              
+              <div className="flex space-x-3">
+                <button
+                  onClick={() => setShowCreatePost(false)}
+                  className="flex-1 px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleCreatePost}
+                  disabled={!newPostContent.trim()}
+                  className="flex-1 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
+                >
+                  Post
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
