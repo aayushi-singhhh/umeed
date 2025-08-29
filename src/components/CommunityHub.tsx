@@ -1,50 +1,13 @@
 import React, { useState } from 'react';
 import { Users, MessageSquare, Heart, Share2, Calendar, BookOpen, Coffee } from 'lucide-react';
-import { useCommunityPosts, useCreatePost, useTogglePostLike, useReplyToPost } from '../hooks/useAPI';
-import { useAuth } from '../contexts/AuthContext';
 
 export const CommunityHub: React.FC = () => {
   const [activeGroup, setActiveGroup] = useState('adhd-parents');
-  const [newPostContent, setNewPostContent] = useState('');
-  const [showNewPost, setShowNewPost] = useState(false);
-  
-  const { user } = useAuth();
-  const { data: posts = [], isLoading } = useCommunityPosts();
-  const createPostMutation = useCreatePost();
-  const toggleLikeMutation = useTogglePostLike();
 
-  const handleCreatePost = async () => {
-    if (!newPostContent.trim()) return;
-    
-    try {
-      await createPostMutation.mutateAsync({
-        content: newPostContent,
-        group: activeGroup
-      });
-      setNewPostContent('');
-      setShowNewPost(false);
-    } catch (error) {
-      console.error('Failed to create post:', error);
-    }
+  const handleLikePost = (postId: string) => {
+    // Mock like toggle - could update local state if needed
+    console.log('Liked post:', postId);
   };
-
-  const handleLikePost = async (postId: string) => {
-    try {
-      await toggleLikeMutation.mutateAsync(postId);
-    } catch (error) {
-      console.error('Failed to toggle like:', error);
-    }
-  };
-
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 p-6">
-        <div className="flex items-center justify-center h-64">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600"></div>
-        </div>
-      </div>
-    );
-  }
 
   const parentGroups = [
     { id: 'adhd-parents', name: 'ADHD Parent Circle', members: 234, color: 'bg-blue-500', icon: '🎯' },
@@ -53,16 +16,7 @@ export const CommunityHub: React.FC = () => {
     { id: 'teen-support', name: 'Teen Transition Support', members: 156, color: 'bg-orange-500', icon: '🌟' }
   ];
 
-  const recentPosts = posts.length > 0 ? posts.slice(0, 3).map((post: any) => ({
-    id: post._id,
-    author: post.author?.name || 'Anonymous',
-    group: post.group || 'General',
-    time: new Date(post.createdAt).toLocaleDateString(),
-    content: post.content,
-    likes: post.likes?.length || 0,
-    replies: post.replies?.length || 0,
-    hasLiked: post.likes?.includes(user?.id) || false
-  })) : [
+  const recentPosts = [
     {
       id: 1,
       author: 'Sarah M.',

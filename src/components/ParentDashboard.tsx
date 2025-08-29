@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Calendar, TrendingUp, Users, BookOpen, CheckCircle, Activity } from 'lucide-react';
+import { CommunityHub } from './CommunityHub';
 
 export const ParentDashboard: React.FC = () => {
   const [activeTab, setActiveTab] = useState('overview');
@@ -178,28 +179,7 @@ export const ParentDashboard: React.FC = () => {
       )}
 
       {activeTab === 'community' && (
-        <div className="bg-white rounded-xl shadow-lg p-6">
-          <h3 className="text-xl font-semibold text-gray-900 mb-4 flex items-center">
-            <Users className="h-5 w-5 text-blue-500 mr-2" />
-            Community Highlights
-          </h3>
-          <div className="space-y-4">
-            <div className="p-4 bg-blue-50 rounded-lg">
-              <p className="font-medium text-blue-900">ADHD Parent Circle</p>
-              <p className="text-blue-700 text-sm mt-1">
-                "Timer method worked! My son completed homework in 20 minutes instead of 2 hours."
-              </p>
-              <p className="text-blue-600 text-xs mt-2">34 likes • Very helpful</p>
-            </div>
-            <div className="p-4 bg-green-50 rounded-lg">
-              <p className="font-medium text-green-900">Dyslexia Support Network</p>
-              <p className="text-green-700 text-sm mt-1">
-                "New research: Colored overlays help 60% of dyslexic children with reading comfort."
-              </p>
-              <p className="text-green-600 text-xs mt-2">28 likes • Research-based</p>
-            </div>
-          </div>
-        </div>
+        <CommunityHub />
       )}
 
       {activeTab === 'appointments' && (
