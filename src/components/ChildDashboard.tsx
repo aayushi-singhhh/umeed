@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { Star, Trophy, Gift, Sparkles, Wind } from 'lucide-react';
 import { GameSelector } from './games/GameSelector';
 import { AILearningCoach } from './AILearningCoach';
+import { StoryCreator } from './StoryCreator';
+import { GameifiedQuests } from './GameifiedQuests';
 
 export const ChildDashboard: React.FC = () => {
   const [currentMood, setCurrentMood] = useState<string>('happy');
@@ -10,6 +12,8 @@ export const ChildDashboard: React.FC = () => {
   const [showCelebration, setShowCelebration] = useState(false);
   const [showGames, setShowGames] = useState(false);
   const [showAICoach, setShowAICoach] = useState(false);
+  const [showStoryCreator, setShowStoryCreator] = useState(false);
+  const [showGameifiedQuests, setShowGameifiedQuests] = useState(false);
   const [score, setScore] = useState(47); // Starting with mock score
 
   // Mock child data
@@ -224,6 +228,24 @@ export const ChildDashboard: React.FC = () => {
     );
   }
 
+  if (showStoryCreator) {
+    return <StoryCreator />;
+  }
+
+  if (showGameifiedQuests) {
+    return (
+      <GameifiedQuests 
+        onBack={() => setShowGameifiedQuests(false)}
+        onComplete={(questScore) => {
+          setScore(score + questScore * 5); // 5 points per correct answer
+          setShowGameifiedQuests(false);
+          setShowCelebration(true);
+          setTimeout(() => setShowCelebration(false), 3000);
+        }}
+      />
+    );
+  }
+
   if (showAICoach) {
     return <AILearningCoach learningData={learningData} userRole="child" />;
   }
@@ -424,6 +446,60 @@ export const ChildDashboard: React.FC = () => {
                 </div>
               </div>
             </div>
+          </div>
+        </div>
+
+        {/* Creative Story Zone */}
+        <div className="bg-gradient-to-br from-purple-100 to-pink-100 rounded-3xl shadow-lg p-6 mb-8">
+          <h3 className="text-2xl font-bold text-purple-800 mb-4 flex items-center">
+            <span className="mr-2">📚</span>
+            Create Your Own Story!
+            <span className="ml-2">✨</span>
+          </h3>
+          
+          <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 text-center">
+            <div className="text-6xl mb-4">🏰📖🦄</div>
+            <h4 className="text-xl font-bold text-gray-800 mb-2">Magic Story Creator</h4>
+            <p className="text-gray-600 mb-6">
+              Tell me about your favorite characters and themes, and I'll create a magical story just for you! 
+              With pictures and even someone to read it to you!
+            </p>
+            
+            <button
+              onClick={() => setShowStoryCreator(true)}
+              className="bg-gradient-to-r from-purple-500 to-pink-500 text-white font-bold text-lg py-4 px-8 rounded-2xl hover:from-purple-600 hover:to-pink-600 transition-all duration-300 transform hover:scale-105 shadow-lg"
+            >
+              <span className="mr-2">🪄</span>
+              Create My Story!
+              <span className="ml-2">📚</span>
+            </button>
+          </div>
+        </div>
+
+        {/* AI Quest Generator Zone */}
+        <div className="bg-gradient-to-br from-blue-100 to-purple-100 rounded-3xl shadow-lg p-6 mb-8">
+          <h3 className="text-2xl font-bold text-blue-800 mb-4 flex items-center">
+            <span className="mr-2">🎮</span>
+            AI Learning Quests!
+            <span className="ml-2">🏆</span>
+          </h3>
+          
+          <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 text-center">
+            <div className="text-6xl mb-4">🧠🎯🌟</div>
+            <h4 className="text-xl font-bold text-gray-800 mb-2">Smart Learning Adventures</h4>
+            <p className="text-gray-600 mb-6">
+              Play fun games that adapt to how you learn best! Match pictures, fill in blanks, and answer quiz questions. 
+              Each quest is made just for you by AI! 🤖✨
+            </p>
+            
+            <button
+              onClick={() => setShowGameifiedQuests(true)}
+              className="bg-gradient-to-r from-blue-500 to-purple-500 text-white font-bold text-lg py-4 px-8 rounded-2xl hover:from-blue-600 hover:to-purple-600 transition-all duration-300 transform hover:scale-105 shadow-lg"
+            >
+              <span className="mr-2">🚀</span>
+              Start Quest Adventure!
+              <span className="ml-2">🎮</span>
+            </button>
           </div>
         </div>
 
