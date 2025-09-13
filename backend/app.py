@@ -22,41 +22,76 @@ class StoryGenerator:
     def __init__(self):
         self.client = openai.OpenAI(api_key=os.getenv('OPENAI_API_KEY'))
     
-    def generate_story_text(self, theme, characters):
-        """Generate a story using OpenAI GPT"""
+    def generate_story_text(self, theme, characters, reading_level=1):
+        """Generate an adaptive story using OpenAI GPT with reading coach features"""
         try:
             character_list = [char.strip() for char in characters.split(',') if char.strip()]
             character_text = ', '.join(character_list)
             
+            # Enhanced prompt for adaptive storytelling with reading coach
             prompt = f"""
-            Write a simple, positive, and engaging story for neurodivergent children aged 5-12.
-            
-            Theme: {theme}
-            Characters: {character_text}
-            
+            You are a friendly and patient learning companion for children aged 6–12, especially those with learning disabilities (like dyslexia, ADHD, or autism). You create engaging, adaptive stories and provide gentle reading support.
+
+            Generate a short adaptive story for a child who chose the theme '{theme}' with characters '{character_text}'.
+
             Requirements:
-            - 500-700 words
-            - Simple vocabulary and sentence structure
-            - Positive, uplifting message
-            - Clear beginning, middle, and end
-            - Include sensory details that are calming, not overwhelming
-            - Focus on friendship, problem-solving, and acceptance
-            - Break into natural paragraph breaks for illustration pages
+            - Story Text: 5-6 short sentences, simple vocabulary, clear narrative
+            - Keep the tone playful and positive
+            - Reading Level {reading_level}: {"1-2 sentences per page" if reading_level == 1 else "2-3 sentences with slightly harder words" if reading_level == 2 else "3-4 sentences, introducing new vocabulary"}
             
-            Make the story engaging but not overstimulating, with a gentle pace and reassuring tone.
+            Return ONLY valid JSON in this exact format:
+            {{
+                "story": {{
+                    "title": "Story Title 🚀",
+                    "theme": "{theme}",
+                    "characters": {character_list},
+                    "level": {reading_level},
+                    "pages": [
+                        {{
+                            "text": "Short sentence here.",
+                            "illustration_prompt": "Colorful, cartoonish, child-friendly illustration description for DALL-E"
+                        }},
+                        {{
+                            "text": "Another short sentence.",
+                            "illustration_prompt": "Another illustration description"
+                        }}
+                    ]
+                }},
+                "tts_text": "Complete story text for narration",
+                "reading_coach": {{
+                    "sentence": "One key sentence from the story",
+                    "pronunciation": "Phonetic pronunciation guide",
+                    "correction_phrases": [
+                        "Almost! Try saying 'word' slowly: w-o-r-d 🌟",
+                        "Great try! Remember this sound 🎯"
+                    ]
+                }},
+                "reward": {{
+                    "badge": "Achievement Badge Name 🏆",
+                    "unlocked_character": "New Character Name 🌟",
+                    "description": "You're amazing at {theme.lower()}!"
+                }}
+            }}
+            
+            Rules:
+            - Use simple, encouraging language
+            - Make illustrations colorful and non-scary
+            - Provide gentle, supportive feedback
+            - Include appropriate emojis
+            - Keep sentences short for reading level {reading_level}
             """
             
             response = self.client.chat.completions.create(
                 model="gpt-4",
                 messages=[
-                    {"role": "system", "content": "You are an expert children's story writer specializing in content for neurodivergent children. You create calm, positive, and engaging stories with simple language."},
+                    {"role": "system", "content": "You are an expert adaptive storytelling AI for children with learning disabilities. Always respond with valid JSON only."},
                     {"role": "user", "content": prompt}
                 ],
-                max_tokens=1000,
+                max_tokens=1200,
                 temperature=0.7
             )
             
-            return response.choices[0].message.content.strip()
+            return response.choices[0].message.content
         
         except Exception as e:
             print(f"Error generating story: {e}")
@@ -301,9 +336,73 @@ def generate_quests():
         print(f"Error in generate_quests: {e}")
         return jsonify({"error": f"Internal server error: {str(e)}"}), 500
 
+@app.route('/generate_story_mock', methods=['POST'])
+def generate_story_mock():
+    """Mock endpoint for testing the frontend when OpenAI API is not available"""
+    try:
+        data = request.get_json()
+        
+        if not data:
+            return jsonify({"error": "No JSON data provided"}), 400
+        
+        theme = data.get('theme', 'friendship').strip()
+        characters = data.get('characters', 'Buddy, Luna').strip()
+        reading_level = data.get('reading_level', 1)
+        
+        # Mock story data
+        mock_response = {
+            "success": True,
+            "story": {
+                "title": f"The {theme.title()} Adventure",
+                "theme": theme,
+                "characters": [char.strip() for char in characters.split(',')],
+                "level": reading_level,
+                "pages": [
+                    {
+                        "text": f"Once upon a time, {characters.split(',')[0]} was feeling a little lonely.",
+                        "illustration_prompt": f"A cute cartoon {characters.split(',')[0]} looking thoughtful in a beautiful meadow"
+                    },
+                    {
+                        "text": f"Then {characters.split(',')[0]} met {characters.split(',')[1] if ',' in characters else 'a new friend'} and they became best friends!",
+                        "illustration_prompt": f"Two happy cartoon characters playing together in a sunny park"
+                    },
+                    {
+                        "text": "They learned that friendship makes everything better and more fun!",
+                        "illustration_prompt": "Happy cartoon friends celebrating together with sparkles and rainbows"
+                    }
+                ],
+                "illustrations": [
+                    "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgZmlsbD0iIzg3Q0VFQiIvPjx0ZXh0IHg9IjIwMCIgeT0iMTUwIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMjQiIGZpbGw9IndoaXRlIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj5TdG9yeSBJbGx1c3RyYXRpb24gMTwvdGV4dD48L3N2Zz4=",
+                    "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgZmlsbD0iIzk4RkI5OCIvPjx0ZXh0IHg9IjIwMCIgeT0iMTUwIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMjQiIGZpbGw9IndoaXRlIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj5TdG9yeSBJbGx1c3RyYXRpb24gMjwvdGV4dD48L3N2Zz4=",
+                    "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgZmlsbD0iI0ZGQjZDMSIvPjx0ZXh0IHg9IjIwMCIgeT0iMTUwIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMjQiIGZpbGw9IndoaXRlIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj5TdG9yeSBJbGx1c3RyYXRpb24gMzwvdGV4dD48L3N2Zz4="
+                ],
+                "audio_base64": "UklGRiYEAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQIEAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmcXBT2H0fLCdSEFLYHN8diJOQgYZ73o66hVFApGn+DyvmcXBT2H0fLCdSEGMHzK8N2QQAoUXrTp66hVFApGn+DyvmcXBT2H0fLCdSEGLyA=",
+                "page_count": 3
+            },
+            "reading_coach": {
+                "sentence": "They learned that friendship makes everything better and more fun!",
+                "pronunciation": "THEY LERND THAT FREND-ship MAYKS EV-ree-thing BET-ter AND MOR FUN!",
+                "correction_phrases": [
+                    "Great try! Let's practice 'friendship': FREND-ship 🌟",
+                    "Almost there! 'Everything' sounds like: EV-ree-thing 🎯"
+                ]
+            },
+            "reward": {
+                "badge": "Friendship Explorer 🌟",
+                "unlocked_character": "Buddy the Bear 🐻",
+                "description": f"You're amazing at understanding {theme}!"
+            }
+        }
+        
+        return jsonify(mock_response)
+    
+    except Exception as e:
+        print(f"Error in generate_story_mock: {e}")
+        return jsonify({"error": f"Mock endpoint error: {str(e)}"}), 500
+
 @app.route('/generate_story', methods=['POST'])
 def generate_story():
-    """Main endpoint to generate a complete story with illustrations and audio"""
+    """Main endpoint to generate an adaptive story with reading coach features"""
     try:
         data = request.get_json()
         
@@ -312,6 +411,7 @@ def generate_story():
         
         theme = data.get('theme', '').strip()
         characters = data.get('characters', '').strip()
+        reading_level = data.get('reading_level', 1)
         
         if not theme:
             return jsonify({"error": "Theme is required"}), 400
@@ -319,40 +419,84 @@ def generate_story():
         if not characters:
             return jsonify({"error": "Characters are required"}), 400
         
-        # Generate story text
-        print(f"Generating story for theme: {theme}, characters: {characters}")
-        story_text = story_generator.generate_story_text(theme, characters)
+        # Generate adaptive story with reading coach
+        print(f"Generating adaptive story for theme: {theme}, characters: {characters}, level: {reading_level}")
+        story_response = story_generator.generate_story_text(theme, characters, reading_level)
         
-        if not story_text:
+        if not story_response:
             return jsonify({"error": "Failed to generate story"}), 500
         
-        # Split into paragraphs
-        paragraphs = story_generator.split_into_paragraphs(story_text)
+        # Try to parse the JSON response
+        try:
+            import json
+            story_data = json.loads(story_response)
+        except json.JSONDecodeError as e:
+            print(f"JSON parsing error: {e}")
+            # Fallback to simple story structure
+            story_data = {
+                "story": {
+                    "title": f"Adventure with {characters.split(',')[0].strip()}",
+                    "theme": theme,
+                    "characters": characters.split(','),
+                    "level": reading_level,
+                    "pages": [
+                        {
+                            "text": f"Once upon a time, there was a magical adventure about {theme.lower()}.",
+                            "illustration_prompt": f"Colorful cartoon illustration of {characters.split(',')[0].strip()} in a {theme.lower()} setting"
+                        },
+                        {
+                            "text": f"{characters.split(',')[0].strip()} discovered something wonderful.",
+                            "illustration_prompt": f"Happy {characters.split(',')[0].strip()} making a discovery"
+                        },
+                        {
+                            "text": "And they all lived happily ever after!",
+                            "illustration_prompt": "Cheerful ending scene with all characters celebrating"
+                        }
+                    ]
+                },
+                "tts_text": f"Once upon a time, there was a magical adventure about {theme.lower()}. {characters.split(',')[0].strip()} discovered something wonderful. And they all lived happily ever after!",
+                "reading_coach": {
+                    "sentence": f"{characters.split(',')[0].strip()} discovered something wonderful.",
+                    "pronunciation": f"{characters.split(',')[0].strip()} dis-cov-ered some-thing won-der-ful",
+                    "correction_phrases": [
+                        "Almost! Try saying 'discovered' slowly: dis-cov-ered 🌟",
+                        "Great try! Remember 'wonderful' sounds like won-der-ful 🎯"
+                    ]
+                },
+                "reward": {
+                    "badge": f"{theme.title()} Explorer Badge 🏆",
+                    "unlocked_character": "Brave Adventurer 🌟",
+                    "description": f"You're amazing at {theme.lower()} stories!"
+                }
+            }
         
-        # Generate illustrations for each paragraph
+        # Generate illustrations for each page
         print("Generating illustrations...")
         illustrations = []
-        for i, paragraph in enumerate(paragraphs):
-            print(f"Generating illustration {i+1}/{len(paragraphs)}")
-            image_url = story_generator.generate_illustration(paragraph, theme, characters)
+        for i, page in enumerate(story_data['story']['pages']):
+            print(f"Generating illustration {i+1}/{len(story_data['story']['pages'])}")
+            image_url = story_generator.generate_illustration(page['illustration_prompt'], theme, characters)
             illustrations.append(image_url)
         
         # Generate audio narration
         print("Generating audio narration...")
-        audio_base64 = story_generator.generate_audio_narration(story_text)
+        audio_base64 = story_generator.generate_audio_narration(story_data['tts_text'])
         
-        # Prepare response
+        # Prepare enhanced response
         response_data = {
             "success": True,
             "story": {
-                "full_text": story_text,
-                "theme": theme,
-                "characters": characters.split(','),
-                "paragraphs": paragraphs,
+                "title": story_data['story']['title'],
+                "theme": story_data['story']['theme'],
+                "characters": story_data['story']['characters'],
+                "level": story_data['story']['level'],
+                "pages": story_data['story']['pages'],
                 "illustrations": illustrations,
                 "audio_base64": audio_base64,
-                "page_count": len(paragraphs)
-            }
+                "page_count": len(story_data['story']['pages'])
+            },
+            "reading_coach": story_data['reading_coach'],
+            "reward": story_data['reward']
         }
         
         return jsonify(response_data)

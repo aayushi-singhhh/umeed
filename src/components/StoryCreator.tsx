@@ -1,11 +1,29 @@
 import React, { useState } from 'react';
-import { Wand2, Play, Pause, RotateCcw, BookOpen, Sparkles } from 'lucide-react';
+import { Wand2, Play, Pause, RotateCcw, BookOpen, Sparkles, Award, HelpCircle } from 'lucide-react';
+
+interface StoryPage {
+  text: string;
+  illustration_prompt: string;
+}
+
+interface ReadingCoach {
+  sentence: string;
+  pronunciation: string;
+  correction_phrases: string[];
+}
+
+interface Reward {
+  badge: string;
+  unlocked_character: string;
+  description: string;
+}
 
 interface StoryData {
-  full_text: string;
+  title: string;
   theme: string;
   characters: string[];
-  paragraphs: string[];
+  level: number;
+  pages: StoryPage[];
   illustrations: string[];
   audio_base64: string;
   page_count: number;
@@ -14,18 +32,25 @@ interface StoryData {
 interface ApiResponse {
   success: boolean;
   story: StoryData;
+  reading_coach: ReadingCoach;
+  reward: Reward;
   error?: string;
 }
 
 export const StoryCreator: React.FC = () => {
   const [theme, setTheme] = useState('');
   const [characters, setCharacters] = useState('');
+  const [readingLevel, setReadingLevel] = useState(1);
   const [isGenerating, setIsGenerating] = useState(false);
   const [story, setStory] = useState<StoryData | null>(null);
+  const [readingCoach, setReadingCoach] = useState<ReadingCoach | null>(null);
+  const [reward, setReward] = useState<Reward | null>(null);
   const [currentPage, setCurrentPage] = useState(0);
   const [isPlayingAudio, setIsPlayingAudio] = useState(false);
   const [audioElement, setAudioElement] = useState<HTMLAudioElement | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [showReadingCoach, setShowReadingCoach] = useState(false);
+  const [showReward, setShowReward] = useState(false);
 
   const generateStory = async () => {
     if (!theme.trim() || !characters.trim()) {
@@ -36,9 +61,13 @@ export const StoryCreator: React.FC = () => {
     setIsGenerating(true);
     setError(null);
     setStory(null);
+    setReadingCoach(null);
+    setReward(null);
+    setShowReadingCoach(false);
+    setShowReward(false);
 
     try {
-      const response = await fetch('http://localhost:5001/generate_story', {
+      const response = await fetch('http://localhost:5001/generate_story_mock', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -46,6 +75,7 @@ export const StoryCreator: React.FC = () => {
         body: JSON.stringify({
           theme: theme.trim(),
           characters: characters.trim(),
+          reading_level: readingLevel,
         }),
       });
 
@@ -57,7 +87,15 @@ export const StoryCreator: React.FC = () => {
 
       if (data.success && data.story) {
         setStory(data.story);
+        setReadingCoach(data.reading_coach);
+        setReward(data.reward);
         setCurrentPage(0);
+        
+        // Show reward after story is loaded
+        setTimeout(() => {
+          setShowReward(true);
+          setTimeout(() => setShowReward(false), 5000);
+        }, 1000);
       } else {
         setError(data.error || 'Failed to generate story');
       }
@@ -174,6 +212,28 @@ export const StoryCreator: React.FC = () => {
                   />
                 </div>
 
+                {/* Reading Level Selection */}
+                <div>
+                  <label className="block text-xl font-semibold text-purple-800 mb-3">
+                    📚 Reading Level
+                  </label>
+                  <div className="flex space-x-4">
+                    {[1, 2, 3].map((level) => (
+                      <button
+                        key={level}
+                        onClick={() => setReadingLevel(level)}
+                        className={`flex-1 p-4 rounded-2xl border-3 font-semibold transition-all ${
+                          readingLevel === level
+                            ? 'bg-purple-500 text-white border-purple-500'
+                            : 'bg-white border-purple-300 text-purple-700 hover:border-purple-400'
+                        }`}
+                      >
+                        {level === 1 ? '🌟 Beginner' : level === 2 ? '⭐ Intermediate' : '🌠 Advanced'}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
                 {/* Error Display */}
                 {error && (
                   <div className="bg-red-100 border-2 border-red-300 rounded-2xl p-4">
@@ -230,6 +290,16 @@ export const StoryCreator: React.FC = () => {
                     <span>{isPlayingAudio ? 'Pause' : 'Play'} Story</span>
                   </button>
                   
+                  {readingCoach && (
+                    <button
+                      onClick={() => setShowReadingCoach(!showReadingCoach)}
+                      className="flex items-center space-x-2 bg-blue-500 text-white px-4 py-2 rounded-xl hover:bg-blue-600 transition-colors"
+                    >
+                      <HelpCircle className="h-5 w-5" />
+                      <span>Reading Coach</span>
+                    </button>
+                  )}
+                  
                   <button
                     onClick={resetStory}
                     className="flex items-center space-x-2 bg-purple-500 text-white px-4 py-2 rounded-xl hover:bg-purple-600 transition-colors"
@@ -240,6 +310,43 @@ export const StoryCreator: React.FC = () => {
                 </div>
               </div>
             </div>
+
+            {/* Reading Coach Section */}
+            {showReadingCoach && readingCoach && (
+              <div className="bg-blue-50/90 backdrop-blur-sm rounded-2xl shadow-lg p-6 border-2 border-blue-200">
+                <div className="flex items-center mb-4">
+                  <HelpCircle className="h-6 w-6 text-blue-600 mr-3" />
+                  <h3 className="text-xl font-bold text-blue-800">Reading Coach</h3>
+                </div>
+                <div className="space-y-4">
+                  <div>
+                    <p className="text-blue-700 font-medium mb-2">Practice this sentence:</p>
+                    <p className="text-lg text-gray-800 bg-white p-4 rounded-xl border-2 border-blue-200">
+                      "{readingCoach.sentence}"
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-blue-700 font-medium mb-2">Pronunciation guide:</p>
+                    <p className="text-lg text-blue-800 bg-blue-100 p-4 rounded-xl font-mono">
+                      {readingCoach.pronunciation}
+                    </p>
+                  </div>
+                  {readingCoach.correction_phrases.length > 0 && (
+                    <div>
+                      <p className="text-blue-700 font-medium mb-2">Helpful tips:</p>
+                      <ul className="space-y-2">
+                        {readingCoach.correction_phrases.map((phrase, index) => (
+                          <li key={index} className="flex items-start">
+                            <span className="text-blue-500 mr-2">•</span>
+                            <span className="text-gray-800">{phrase}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
 
             {/* Storybook Pages */}
             <div className="bg-white/90 backdrop-blur-sm rounded-3xl shadow-2xl p-8 border-4 border-purple-200">
@@ -271,7 +378,7 @@ export const StoryCreator: React.FC = () => {
                 <div className="order-2 lg:order-2">
                   <div className="bg-gradient-to-br from-yellow-50 to-orange-50 rounded-2xl p-6 border-3 border-yellow-300 shadow-lg">
                     <p className="text-lg leading-relaxed text-gray-800 font-medium">
-                      {story.paragraphs[currentPage]}
+                      {story.pages[currentPage]?.text || 'Loading story text...'}
                     </p>
                   </div>
                 </div>
@@ -307,6 +414,39 @@ export const StoryCreator: React.FC = () => {
                   className="bg-blue-500 text-white px-6 py-3 rounded-xl disabled:bg-gray-300 disabled:cursor-not-allowed hover:bg-blue-600 transition-colors font-semibold"
                 >
                   Next →
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Reward Animation */}
+        {showReward && reward && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+            <div className="bg-gradient-to-br from-yellow-200 via-orange-200 to-red-200 rounded-3xl p-8 shadow-2xl border-4 border-yellow-400 max-w-md mx-4 animate-pulse">
+              <div className="text-center">
+                <div className="flex justify-center mb-4">
+                  <Award className="h-16 w-16 text-yellow-600 animate-bounce" />
+                </div>
+                <h3 className="text-2xl font-bold text-orange-800 mb-4">🎉 Congratulations! 🎉</h3>
+                <div className="space-y-3">
+                  <div className="bg-white/80 rounded-2xl p-4">
+                    <p className="text-lg font-semibold text-orange-700 mb-2">You earned a badge!</p>
+                    <p className="text-xl">{reward.badge}</p>
+                  </div>
+                  <div className="bg-white/80 rounded-2xl p-4">
+                    <p className="text-lg font-semibold text-orange-700 mb-2">Unlocked character!</p>
+                    <p className="text-xl">{reward.unlocked_character}</p>
+                  </div>
+                  <div className="bg-white/80 rounded-2xl p-4">
+                    <p className="text-gray-700">{reward.description}</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setShowReward(false)}
+                  className="mt-6 bg-gradient-to-r from-purple-500 to-pink-500 text-white font-bold py-3 px-8 rounded-2xl hover:from-purple-600 hover:to-pink-600 transition-all transform hover:scale-105"
+                >
+                  Awesome! ✨
                 </button>
               </div>
             </div>

@@ -4,10 +4,14 @@ import { TeacherDashboard } from './components/TeacherDashboard';
 import { ChildDashboard } from './components/ChildDashboard';
 import { TherapistDashboard } from './components/TherapistDashboard';
 import { CommunityHub } from './components/CommunityHub';
-import { Users, Shield, Lightbulb } from 'lucide-react';
+import { AIReadingCoach } from './components/AIReadingCoach';
+import { EmotionAICompanion } from './components/EmotionAICompanion';
+import { PredictiveAnalyticsDashboard } from './components/PredictiveAnalyticsDashboard';
+import LandingPage from './components/LandingPage';
+import { Brain, Heart, BarChart3, Bot } from 'lucide-react';
 
 type UserRole = 'parent' | 'teacher' | 'child' | 'therapist';
-type CurrentView = 'landing' | 'login' | 'signup' | 'dashboard' | 'community';
+type CurrentView = 'landing' | 'login' | 'signup' | 'dashboard' | 'community' | 'ai-reading-coach' | 'emotion-companion' | 'predictive-analytics';
 
 interface User {
   name: string;
@@ -51,69 +55,7 @@ function App() {
     setCurrentView('landing');
   };
 
-  // Landing Page Component
-  const LandingPage = () => (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-blue-50 to-indigo-100">
-      {/* Hero Section */}
-      <div className="relative">
-        <div className="absolute inset-0 bg-gradient-to-r from-purple-400/20 to-blue-400/20"></div>
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 pb-16">
-          <div className="text-center">
-            <h1 className="text-6xl font-bold text-gray-900 mb-6">
-              Welcome to <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-blue-600">Umeed</span>
-            </h1>
-            <p className="text-xl text-gray-600 mb-12 max-w-3xl mx-auto">
-              Empowering children with learning differences through personalized, AI-driven educational experiences. 
-              Join thousands of families, teachers, and therapists creating brighter futures together.
-            </p>
-            
-            <div className="flex flex-col sm:flex-row gap-4 justify-center mb-16">
-              <button
-                onClick={() => setCurrentView('signup')}
-                className="px-8 py-4 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-lg font-semibold hover:from-purple-700 hover:to-blue-700 transition-all duration-200 shadow-lg"
-              >
-                Get Started Free
-              </button>
-              <button
-                onClick={() => setCurrentView('login')}
-                className="px-8 py-4 border-2 border-purple-600 text-purple-600 rounded-lg font-semibold hover:bg-purple-50 transition-all duration-200"
-              >
-                Sign In
-              </button>
-            </div>
 
-            {/* Features Section */}
-            <div className="bg-white rounded-2xl shadow-xl p-8 mb-16">
-              <h2 className="text-3xl font-bold text-center text-gray-900 mb-12">Why Choose Umeed?</h2>
-              <div className="grid md:grid-cols-3 gap-8">
-                <div className="text-center">
-                  <div className="bg-purple-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <Lightbulb className="h-8 w-8 text-purple-600" />
-                  </div>
-                  <h3 className="text-xl font-semibold mb-2">AI-Powered Learning</h3>
-                  <p className="text-gray-600">Personalized content that adapts to each child's unique learning style and pace</p>
-                </div>
-                <div className="text-center">
-                  <div className="bg-blue-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <Users className="h-8 w-8 text-blue-600" />
-                  </div>
-                  <h3 className="text-xl font-semibold mb-2">Community Support</h3>
-                  <p className="text-gray-600">Connect with other families and professionals sharing similar journeys</p>
-                </div>
-                <div className="text-center">
-                  <div className="bg-green-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <Shield className="h-8 w-8 text-green-600" />
-                  </div>
-                  <h3 className="text-xl font-semibold mb-2">Safe & Secure</h3>
-                  <p className="text-gray-600">Privacy-first platform with child-safe design and parental controls</p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
 
   // Login Component
   const LoginPage = () => (
@@ -303,7 +245,7 @@ function App() {
 
   // Dashboard Component with Navigation
   const DashboardWithNav = () => {
-    const [dashboardView, setDashboardView] = useState<'dashboard' | 'community'>('dashboard');
+    const [dashboardView, setDashboardView] = useState<'dashboard' | 'community' | 'ai-reading-coach' | 'emotion-companion' | 'predictive-analytics'>('dashboard');
 
     return (
       <div className="min-h-screen bg-gray-50">
@@ -316,10 +258,10 @@ function App() {
                 <span className="ml-4 text-gray-600">Welcome, {user?.name}!</span>
               </div>
               
-              <div className="flex items-center space-x-4">
+              <div className="flex items-center space-x-2">
                 <button
                   onClick={() => setDashboardView('dashboard')}
-                  className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                  className={`px-3 py-2 rounded-lg font-medium text-sm transition-colors ${
                     dashboardView === 'dashboard'
                       ? 'bg-purple-100 text-purple-700'
                       : 'text-gray-600 hover:text-gray-900'
@@ -327,9 +269,53 @@ function App() {
                 >
                   Dashboard
                 </button>
+                
+                {/* AI Features Dropdown */}
+                <div className="relative group">
+                  <button className="flex items-center space-x-1 px-3 py-2 rounded-lg font-medium text-sm text-gray-600 hover:text-gray-900 transition-colors">
+                    <Bot className="h-4 w-4" />
+                    <span>AI Features</span>
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </button>
+                  
+                  <div className="absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-lg border border-gray-200 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+                    <div className="py-2">
+                      <button
+                        onClick={() => setDashboardView('ai-reading-coach')}
+                        className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-50 flex items-center space-x-2 ${
+                          dashboardView === 'ai-reading-coach' ? 'bg-blue-50 text-blue-700' : 'text-gray-700'
+                        }`}
+                      >
+                        <Brain className="h-4 w-4 text-blue-600" />
+                        <span>AI Reading Coach 2.0</span>
+                      </button>
+                      <button
+                        onClick={() => setDashboardView('emotion-companion')}
+                        className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-50 flex items-center space-x-2 ${
+                          dashboardView === 'emotion-companion' ? 'bg-pink-50 text-pink-700' : 'text-gray-700'
+                        }`}
+                      >
+                        <Heart className="h-4 w-4 text-pink-600" />
+                        <span>Emotion AI Companion</span>
+                      </button>
+                      <button
+                        onClick={() => setDashboardView('predictive-analytics')}
+                        className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-50 flex items-center space-x-2 ${
+                          dashboardView === 'predictive-analytics' ? 'bg-indigo-50 text-indigo-700' : 'text-gray-700'
+                        }`}
+                      >
+                        <BarChart3 className="h-4 w-4 text-indigo-600" />
+                        <span>Predictive Analytics</span>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+                
                 <button
                   onClick={() => setDashboardView('community')}
-                  className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                  className={`px-3 py-2 rounded-lg font-medium text-sm transition-colors ${
                     dashboardView === 'community'
                       ? 'bg-purple-100 text-purple-700'
                       : 'text-gray-600 hover:text-gray-900'
@@ -339,7 +325,7 @@ function App() {
                 </button>
                 <button
                   onClick={handleLogout}
-                  className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors"
+                  className="px-3 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors text-sm"
                 >
                   Logout
                 </button>
@@ -349,18 +335,20 @@ function App() {
         </header>
 
         {/* Main Content */}
-        <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          {dashboardView === 'community' ? (
-            <CommunityHub />
-          ) : (
-            <>
+        <div className="flex-1">
+          {dashboardView === 'community' && <CommunityHub />}
+          {dashboardView === 'ai-reading-coach' && <AIReadingCoach />}
+          {dashboardView === 'emotion-companion' && <EmotionAICompanion />}
+          {dashboardView === 'predictive-analytics' && <PredictiveAnalyticsDashboard />}
+          {dashboardView === 'dashboard' && (
+            <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
               {user?.role === 'parent' && <ParentDashboard />}
               {user?.role === 'teacher' && <TeacherDashboard />}
               {user?.role === 'child' && <ChildDashboard />}
               {user?.role === 'therapist' && <TherapistDashboard />}
-            </>
+            </main>
           )}
-        </main>
+        </div>
       </div>
     );
   };
@@ -378,7 +366,12 @@ function App() {
     return <SignupPage />;
   }
 
-  return <LandingPage />;
+  return (
+    <LandingPage 
+      onGetStarted={() => setCurrentView('signup')}
+      onSignIn={() => setCurrentView('login')}
+    />
+  );
 }
 
 export default App;

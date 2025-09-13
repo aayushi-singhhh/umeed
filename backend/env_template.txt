@@ -1,0 +1,41 @@
+# Umeed Backend Environment Configuration
+# Copy this file to .env and fill in your API keys
+
+# OpenAI API Key (Required for advanced AI features)
+OPENAI_API_KEY=your_openai_api_key_here
+
+# Flask Configuration
+FLASK_ENV=development
+FLASK_DEBUG=True
+FLASK_PORT=5000
+
+# Database Configuration (SQLite is used by default)
+DATABASE_URL=sqlite:///umeed_data.db
+
+# AI Model Configuration
+WHISPER_MODEL=base
+EMOTION_MODEL_PATH=./models/emotion_model.pkl
+READING_MODEL_PATH=./models/reading_model.pkl
+
+# Logging Configuration
+LOG_LEVEL=INFO
+LOG_FILE=umeed.log
+
+# Security (for production deployment)
+SECRET_KEY=your_secret_key_here
+JWT_SECRET_KEY=your_jwt_secret_here
+
+# CORS Configuration
+CORS_ORIGINS=http://localhost:3000,http://localhost:5173
+
+# Rate Limiting
+RATE_LIMIT_PER_MINUTE=60
+
+# Feature Flags
+ENABLE_WHISPER=True
+ENABLE_EMOTION_AI=True
+ENABLE_PREDICTIVE_ANALYTICS=True
+
+# Demo Mode Settings
+DEMO_MODE=True
+USE_MOCK_DATA=True
